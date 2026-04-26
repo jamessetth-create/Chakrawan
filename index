@@ -1,0 +1,167 @@
+// ============================================================
+// จักรวาล BUILD STORE — Google Apps Script Backend
+// ============================================================
+
+var SS_ID = ''; // ← ใส่ Spreadsheet ID ตรงนี้หลัง setup
+var SHEET_NAMES = ['USERS','ITEMS','PROJECTS','VEHICLES','DRIVERS',
+                   'REQS','WDS','REPAIRS','STOCK_IN','VEHICLE_LOGS',
+                   'ITEM_REPORTS','NOTIFS'];
+
+function doGet(e)  { return handleRequest(e); }
+function doPost(e) { return handleRequest(e); }
+
+function handleRequest(e) {
+  var output;
+  try {
+    var result = route(e);
+    output = ContentService.createTextOutput(JSON.stringify(result));
+  } catch(err) {
+    output = ContentService.createTextOutput(JSON.stringify({ok:false,error:err.message}));
+  }
+  output.setMimeType(ContentService.MimeType.JSON);
+  return output;
+}
+
+function route(e) {
+  var p = e.parameter || {};
+  var body = {};
+  if (e.postData && e.postData.contents) {
+    try { body = JSON.parse(e.postData.contents); } catch(x) {}
+  }
+  var action = p.action || body.action;
+  var sheet  = p.sheet  || body.sheet;
+  var data   = body.data;
+  var id     = p.id     || body.id;
+  switch(action) {
+    case 'getAll':     return getAllData();
+    case 'save':       return saveRow(sheet, data);
+    case 'update':     return updateRow(sheet, id, data);
+    case 'delete':     return deleteRow(sheet, id);
+    case 'initSheets': return initSheets();
+    default: return {ok:false, error:'Unknown action: '+action};
+  }
+}
+
+function getAllData() {
+  var ss = getSpreadsheet();
+  var result = {};
+  SHEET_NAMES.forEach(function(name) {
+    try {
+      var sh = ss.getSheetByName(name);
+      if (!sh) { result[name] = []; return; }
+      var rows = sh.getDataRange().getValues();
+      if (rows.length <= 1) { result[name] = []; return; }
+      var headers = rows[0];
+      result[name] = rows.slice(1).map(function(row) {
+        var obj = {};
+        headers.forEach(function(h, i) {
+          var val = row[i];
+          if (typeof val === 'string' && (val.startsWith('[') || val.startsWith('{'))) {
+            try { val = JSON.parse(val); } catch(x) {}
+          }
+          obj[h] = (val === undefined) ? '' : val;
+        });
+        return obj;
+      }).filter(function(r) { return r.id; });
+    } catch(err) { result[name] = []; }
+  });
+  return { ok: true, data: result };
+}
+
+function saveRow(sheetName, data) {
+  var ss = getSpreadsheet();
+  var sh = ss.getSheetByName(sheetName);
+  if (!sh) return { ok:false, error:'Sheet not found: '+sheetName };
+  var headers = sh.getRange(1,1,1,sh.getLastColumn()).getValues()[0];
+  var row = headers.map(function(h) {
+    var val = data[h];
+    if (val === undefined || val === null) return '';
+    if (Array.isArray(val) || (typeof val === 'object' && val !== null)) return JSON.stringify(val);
+    return val;
+  });
+  sh.appendRow(row);
+  return { ok: true, id: data.id };
+}
+
+function updateRow(sheetName, id, data) {
+  var ss = getSpreadsheet();
+  var sh = ss.getSheetByName(sheetName);
+  if (!sh) return { ok:false, error:'Sheet not found: '+sheetName };
+  var allData = sh.getDataRange().getValues();
+  var headers = allData[0];
+  var idCol = headers.indexOf('id');
+  if (idCol < 0) return { ok:false, error:'No id column in '+sheetName };
+  for (var i = 1; i < allData.length; i++) {
+    if (String(allData[i][idCol]) === String(id)) {
+      var row = headers.map(function(h, ci) {
+        if (data[h] === undefined) return allData[i][ci];
+        var val = data[h];
+        if (Array.isArray(val) || (typeof val === 'object' && val !== null)) return JSON.stringify(val);
+        return val;
+      });
+      sh.getRange(i+1, 1, 1, row.length).setValues([row]);
+      return { ok: true };
+    }
+  }
+  return { ok:false, error:'Row not found: '+id };
+}
+
+function deleteRow(sheetName, id) {
+  var ss = getSpreadsheet();
+  var sh = ss.getSheetByName(sheetName);
+  if (!sh) return { ok:false, error:'Sheet not found: '+sheetName };
+  var allData = sh.getDataRange().getValues();
+  var headers = allData[0];
+  var idCol = headers.indexOf('id');
+  if (idCol < 0) return { ok:false, error:'No id column' };
+  for (var i = 1; i < allData.length; i++) {
+    if (String(allData[i][idCol]) === String(id)) {
+      sh.deleteRow(i+1);
+      return { ok: true };
+    }
+  }
+  return { ok:false, error:'Row not found: '+id };
+}
+
+function initSheets() {
+  var ss = getSpreadsheet();
+  var schemas = {
+    USERS:        ['id','username','password','name','role','active'],
+    ITEMS:        ['id','name','cat','qty','unit','note','ist','istnote','alertQty','notes'],
+    PROJECTS:     ['id','name','desc','img'],
+    VEHICLES:     ['id','name','plate','type','driver','status','note','img','noteImgs','updatedAt'],
+    DRIVERS:      ['id','name','phone','note'],
+    REQS:         ['id','itemId','itemName','qty','unit','proj','reqName','reqId','date','note','status','approvedBy','rejectReason','createdAt','actionAt'],
+    WDS:          ['id','itemName','qty','unit','proj','reqName','reqId','approvedBy','actionAt'],
+    REPAIRS:      ['id','type','itemId','itemName','desc','priority','reqName','reqId','date','status','adminNote','verifiedBy','doneBy','doneAt'],
+    STOCK_IN:     ['id','itemId','itemName','unit','cat','qty','note','date','createdBy','createdAt'],
+    VEHICLE_LOGS: ['id','vehicleId','vehicleName','driver','date','timeOut','timeIn','proj','note','logBy','createdAt'],
+    ITEM_REPORTS: ['id','itemId','itemName','reason','detail','reportBy','reportId','ts','status'],
+    NOTIFS:       ['id','toId','msg','ts','read','tab','itemId'],
+  };
+  var results = [];
+  Object.keys(schemas).forEach(function(name) {
+    var sh = ss.getSheetByName(name);
+    if (!sh) { sh = ss.insertSheet(name); results.push('Created: '+name); }
+    else { results.push('Exists: '+name); }
+    var firstRow = sh.getRange(1,1,1,schemas[name].length).getValues()[0];
+    if (!firstRow[0]) {
+      sh.getRange(1,1,1,schemas[name].length).setValues([schemas[name]]);
+      sh.getRange(1,1,1,schemas[name].length).setBackground('#1D4ED8').setFontColor('#FFFFFF').setFontWeight('bold');
+    }
+  });
+  var def = ss.getSheetByName('Sheet1');
+  if (def && ss.getNumSheets() > 1) ss.deleteSheet(def);
+  return { ok: true, results: results };
+}
+
+function getSpreadsheet() {
+  if (SS_ID) return SpreadsheetApp.openById(SS_ID);
+  return SpreadsheetApp.getActiveSpreadsheet();
+}
+
+// รัน manual เพื่อ init
+function setup() {
+  var r = initSheets();
+  Logger.log(JSON.stringify(r));
+}
