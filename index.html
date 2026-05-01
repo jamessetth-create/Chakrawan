@@ -3233,6 +3233,16 @@ if (USE_API) {
   var el=document.getElementById('pg-loading');
   if(el){var sub=el.querySelector('div:last-child');if(sub)sub.textContent='Error: '+e.message;}
 }
+
+// ── Expose globals ──────────────────────────────────────────────────
+window.USERS=USERS; window.ITEMS=ITEMS; window.VEHICLES=VEHICLES;
+window.DRIVERS=DRIVERS; window.PROJECTS=PROJECTS; window.REQS=REQS;
+window.REPAIRS=REPAIRS; window.NOTIFS=NOTIFS; window.STOCK_IN=STOCK_IN;
+window.VEHICLE_HISTORY=VEHICLE_HISTORY; window.VEHICLE_LOGS=VEHICLE_LOGS;
+window.loadFromSheets=loadFromSheets; window.migrateToFirebase=migrateToFirebase;
+window.renderDispatch=renderDispatch; window.renderVehicles=renderVehicles;
+window.switchTab=switchTab;
+
 })();
 </script>
 
