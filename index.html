@@ -2050,46 +2050,79 @@ function renderDriversMain(){
 function renderVehicles(){
   if(!me)return;
   var canEdit=can(me.role,"manageStock");
+
+  // filter buttons
   var fr=g("vehicle-filter-row");fr.innerHTML="";
   [{k:"all",l:"ทั้งหมด"},{k:"ok",l:"✅ ปกติ"},{k:"caution",l:"⚠️ ควรระวัง"},{k:"repair",l:"🔧 ซ่อม"},{k:"broken",l:"❌ ใช้ไม่ได้"}].forEach(function(f){
     var b=document.createElement("button");b.type="button";b.textContent=f.l;b.className="prd"+(vehicleFilter===f.k?" on":"");
     b.onclick=function(){vehicleFilter=f.k;document.querySelectorAll("#vehicle-filter-row .prd").forEach(function(x){x.classList.remove("on");});b.classList.add("on");renderVehicles();};
     fr.appendChild(b);
   });
-  if(canEdit)show("btn-add-vehicle");else hide("btn-add-vehicle");
-  var list=vehicleFilter==="all"?VEHICLES:VEHICLES.filter(function(v){return v.status===vehicleFilter;});
-  var el=g("vehicle-list");if(!el)return;
-  if(!list.length){el.style.display="block";el.innerHTML="<div style='text-align:center;color:#CBD5E1;padding:36px;'>ไม่มีรถ/เครื่องจักรในระบบ</div>";return;}
-  el.style.display="grid";el.style.gridTemplateColumns="repeat(auto-fill,minmax(210px,1fr))";el.style.gap="14px";
-  el.innerHTML=list.map(function(v){
-    var st=VST[v.status]||VST.ok;
-    var thumb=v.img?"<img src='"+v.img+"' style='width:100%;height:120px;object-fit:cover;display:block;border-radius:12px 12px 0 0;' data-vview='"+v.id+"'/>"
-      :"<div style='width:100%;height:120px;background:linear-gradient(135deg,#1E293B,#475569);border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:center;font-size:40px;' data-vview='"+v.id+"'>🚛</div>";
-    return "<div class='card vcard' style='overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;'>"+thumb
-      +"<div style='padding:11px 12px;'>"
-      +"<div style='display:flex;align-items:center;gap:5px;margin-bottom:2px;' data-vview='"+v.id+"'>"
-      +"<div style='width:7px;height:7px;background:"+st.dot+";border-radius:50%;flex-shrink:0;box-shadow:0 0 4px "+st.dot+";'></div>"
-      +"<div style='font-weight:700;font-size:13px;color:#1E293B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+v.name+"</div>"
+
+  var el=g("vh-body");if(!el)return;
+  var list=VEHICLES.filter(function(v){
+    if(vehicleFilter==="all") return true;
+    return v.status===vehicleFilter;
+  });
+
+  if(!list.length){el.innerHTML="<div style='text-align:center;color:#CBD5E1;padding:32px;'>ไม่มีรถในหมวดนี้</div>";return;}
+
+  // แบ่งกลุ่มตาม type
+  var groups={};
+  list.forEach(function(v){
+    var cat=v.type||"ไม่ระบุประเภท";
+    if(!groups[cat]) groups[cat]=[];
+    groups[cat].push(v);
+  });
+
+  var html="";
+  Object.keys(groups).sort().forEach(function(cat){
+    var vehs=groups[cat];
+    html+="<div style='margin-bottom:24px;'>"
+      +"<div style='font-family:Prompt,sans-serif;font-weight:700;font-size:13px;color:#1D4ED8;"
+      +"padding:8px 14px;background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;"
+      +"margin-bottom:12px;display:flex;align-items:center;gap:8px;'>"
+      +"🚛 "+cat
+      +"<span style='font-size:11px;font-weight:600;color:#64748B;background:#fff;padding:1px 8px;border-radius:8px;'>"+vehs.length+" คัน</span>"
       +"</div>"
-      +(v.plate?"<div style='font-size:10px;color:#1D4ED8;font-weight:700;margin-bottom:2px;'>🪪 "+v.plate+"</div>":"")
-      +(v.driver?"<div style='font-size:10px;color:#64748B;margin-bottom:4px;'>👤 "+v.driver+"</div>":"")
-      +"<div style='display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:"+st.bg+";color:"+st.c+";border:1px solid "+st.bd+";'>"+st.icon+" "+st.label+"</div>"
-      +(v.note?"<div style='font-size:11px;color:#475569;background:#F8FAFC;border-radius:6px;padding:5px 8px;border:1px solid #E2E8F0;margin-top:6px;'>"+(v.note.length>50?v.note.slice(0,50)+"…":v.note)+"</div>":"")
-      +(canEdit?"<div style='display:flex;gap:4px;margin-top:8px;justify-content:flex-end;'><button type='button' class='bp2' style='padding:4px 8px;font-size:11px;' data-vlog='"+v.id+"'>📋</button><button type='button' class='bg' style='padding:4px 8px;font-size:11px;' data-vedit='"+v.id+"'>✏️</button><button type='button' class='bd' style='padding:4px 8px;font-size:11px;' data-vdel='"+v.id+"'>🗑️</button></div>":"")
-      +"</div></div>";
-  }).join("");
-  el.querySelectorAll("[data-vview]").forEach(function(b){b.onclick=function(){openVehicleDetail(b.dataset.vview);};});
-  el.querySelectorAll("[data-vlog]").forEach(function(b){b.onclick=function(e){e.stopPropagation();openVehicleLog(b.dataset.vlog);};});
-  el.querySelectorAll("[data-vedit]").forEach(function(b){b.onclick=function(e){e.stopPropagation();openVehicleModal(b.dataset.vedit);};});
-  el.querySelectorAll("[data-vdel]").forEach(function(b){b.onclick=function(e){e.stopPropagation();if(confirm("ลบรายการนี้?")){VEHICLES=VEHICLES.filter(function(x){return x.id!==b.dataset.vdel;});renderVehicles();}};});
+      +"<div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;'>"
+      +vehs.map(function(v){return vehicleCard(v,canEdit);}).join("")
+      +"</div>"
+      +"</div>";
+  });
+  el.innerHTML=html;
+
+  // bind buttons
+  el.querySelectorAll("[data-vedit]").forEach(function(b){b.onclick=function(){openVehicleEdit(b.dataset.vedit);};});
+  el.querySelectorAll("[data-vdel]").forEach(function(b){b.onclick=function(){deleteVehicle(b.dataset.vdel);};});
+  el.querySelectorAll("[data-vlog]").forEach(function(b){b.onclick=function(){openVehicleLog(b.dataset.vlog);};});
 }
-if(g("btn-add-vehicle"))g("btn-add-vehicle").onclick=function(){openVehicleModal(null);};
-if(g("vsub-vehicles"))g("vsub-vehicles").onclick=function(){setVehSubTab("vehicles");};
-if(g("vsub-drivers"))g("vsub-drivers").onclick=function(){setVehSubTab("drivers");};
-if(g("btn-add-driver-direct"))g("btn-add-driver-direct").onclick=function(){
-  hide("drv-add-err");g("drv-name").value="";g("drv-phone").value="";g("drv-note").value="";
-  renderDriverList();openMod("mod-drivers");
-};
+
+function vehicleCard(v,canEdit){
+  var st=VST[v.status]||VST.ok;
+  var isOut=v.status==="out";
+  return "<div class='card' style='padding:0;overflow:hidden;border:1.5px solid #E2E8F0;'>"
+    +"<div style='height:90px;background:linear-gradient(135deg,#1E293B,#334155);display:flex;align-items:center;justify-content:center;position:relative;'>"
+    +(v.img?"<img src='"+v.img+"' style='width:100%;height:100%;object-fit:cover;position:absolute;inset:0;'>":"<span style='font-size:40px;'>🚛</span>")
+    +"</div>"
+    +"<div style='padding:12px;'>"
+    +"<div style='display:flex;align-items:center;gap:6px;margin-bottom:6px;'>"
+    +"<span style='font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;background:"+st.color+"20;color:"+st.color+";'>"+st.icon+" "+st.label+"</span>"
+    +(isOut?"<span style='font-size:10px;padding:2px 6px;border-radius:8px;font-weight:700;background:#FEE2E2;color:#DC2626;'>🔴 ออกงาน</span>":"")
+    +"</div>"
+    +"<div style='font-weight:700;font-size:14px;color:#1E293B;margin-bottom:2px;'>"+v.name+"</div>"
+    +(v.plate?"<div style='font-size:11px;color:#94A3B8;'>🪪 "+v.plate+"</div>":"")
+    +(isOut?"<div style='font-size:11px;color:#DC2626;margin-top:4px;'>👤 "+v.currentDriver+(v.currentProj?" · "+v.currentProj:"")+"</div>":"")
+    +(v.note&&!isOut?"<div style='font-size:11px;color:#64748B;margin-top:4px;'>📝 "+v.note+"</div>":"")
+    +(canEdit?"<div style='display:flex;gap:6px;margin-top:10px;'>"
+      +"<button type='button' class='bp' style='padding:5px 8px;font-size:11px;' data-vlog='"+v.id+"'>📋</button>"
+      +"<button type='button' class='bw' style='padding:5px 8px;font-size:11px;' data-vedit='"+v.id+"'>✏️</button>"
+      +"<button type='button' class='bd' style='padding:5px 8px;font-size:11px;' data-vdel='"+v.id+"'>🗑️</button>"
+      +"</div>":"")
+    +"</div></div>";
+}
+
+
 function buildVehicleDriverSel(){
   var sel=g("v-driver-sel"); if(!sel) return;
   sel.innerHTML="<option value=''>-- เลือกคนขับประจำ --</option>"
