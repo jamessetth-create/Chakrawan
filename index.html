@@ -4,8 +4,8 @@
 <meta charset="UTF-8"/>
   <link rel="manifest" href="manifest.json"/>
   <meta name="theme-color" content="#1D4ED8"/>
+  <meta name="mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <meta name="apple-mobile-web-app-title" content="จักรวาล"/>
   <link rel="apple-touch-icon" href="icon-192.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
@@ -223,8 +223,8 @@ button:active{transform:scale(.97);}
       </div>
       <!-- Vehicles sub tabs -->
       <div style="display:flex;gap:4px;margin-bottom:12px;background:#F1F5F9;border-radius:10px;padding:4px;">
-        <button type="button" id="vsub-vehicles" class="stab" style="background:#1D4ED8;color:#fff;" onclick="setVehSubTab('vehicles')">🚛 รถ/เครื่องจักร</button>
-        <button type="button" id="vsub-drivers" class="stab" style="background:transparent;color:#64748B;" onclick="setVehSubTab('drivers')">👤 คนขับ</button>
+        <button type="button" id="vsub-vehicles" class="stab" style="background:#1D4ED8;color:#fff;">🚛 รถ/เครื่องจักร</button>
+        <button type="button" id="vsub-drivers"  class="stab" style="background:transparent;color:#64748B;">👤 คนขับ</button>
       </div>
       <div id="veh-pane-vehicles">
         <div id="vehicle-filter-row" style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;"></div>
@@ -249,55 +249,46 @@ button:active{transform:scale(.97);}
 
     <!-- ██ DISPATCH ██ -->
     <div id="tab-dispatch" class="hidden">
-      <!-- Header -->
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
         <div>
-          <div style="font-family:'Prompt',sans-serif;font-weight:800;font-size:17px;color:#1D4ED8;">🚛 เรียกใช้รถ</div>
-          <div style="font-size:12px;color:#64748B;margin-top:2px;">สถานะรถ · คนขับ · ส่งออก · บันทึกกลับ</div>
+          <div style="font-family:'Prompt',sans-serif;font-weight:800;font-size:16px;color:#7C3AED;">🚛 เรียกใช้รถ</div>
+          <div style="font-size:12px;color:#64748B;margin-top:2px;">ส่งรถออกงาน — บันทึกเวลากลับ — ดูสถานะคนขับ</div>
         </div>
-        <button type="button" id="btn-dispatch-out" class="bp2" style="padding:10px 20px;display:none;">🚛 ส่งรถออกงาน</button>
+<div style="display:flex;gap:8px;">
+          <button type="button" id="btn-quick-book" class="bw" style="padding:9px 14px;">📅 จองรถ</button>
+          <button type="button" id="btn-dispatch-out" class="bp2" style="padding:9px 14px;">🚛 ส่งรถออกงาน</button>
+        </div>
       </div>
 
-      <!-- dummy refs -->
-      <div id="dispatch-veh-status" style="display:none;"></div>
-      <div id="dispatch-driver-status" style="display:none;"></div>
-      <div id="dispatch-bookings" style="display:none;"></div>
-      <div id="dispatch-requests-wrap" style="display:none;"></div>
+      <!-- การจองล่วงหน้า -->
+      <div id="dispatch-bookings" style="margin-bottom:16px;display:none;"></div>
 
-      <!-- สถานะรถทุกคัน -->
-      <div style="font-family:'Prompt',sans-serif;font-weight:700;font-size:14px;color:#1E293B;margin-bottom:10px;display:flex;align-items:center;gap:8px;">
-        🚛 รถ / เครื่องจักร
-        <span id="dispatch-veh-count" style="font-size:11px;font-weight:600;color:#64748B;background:#F1F5F9;padding:2px 8px;border-radius:10px;"></span>
-      </div>
-      <div id="dispatch-vehicles" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:24px;"></div>
+      <!-- สถานะรถ -->
+      <div style="font-family:'Prompt',sans-serif;font-weight:700;font-size:13px;color:#475569;margin-bottom:8px;">🚛 สถานะรถทุกคัน</div>
+      <div id="dispatch-veh-status" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:20px;"></div>
+
+      <!-- สถานะคนขับ -->
+      <div style="font-family:'Prompt',sans-serif;font-weight:700;font-size:13px;color:#475569;margin-bottom:8px;">👤 สถานะคนขับ</div>
+      <div id="dispatch-driver-status" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:20px;"></div>
+
+      <!-- คำขอรอ Approve -->
+      <div id="dispatch-requests-wrap" style="margin-bottom:16px;display:none;"></div>
 
       <!-- กำลังออกงาน -->
-      <div style="font-family:'Prompt',sans-serif;font-weight:700;font-size:14px;color:#DC2626;margin-bottom:10px;">🔴 กำลังออกงานอยู่</div>
-      <div id="dispatch-active" style="margin-bottom:24px;"></div>
+      <div style="font-family:'Prompt',sans-serif;font-weight:700;font-size:13px;color:#DC2626;margin-bottom:8px;">🔴 กำลังออกงานอยู่</div>
+      <div id="dispatch-active" style="margin-bottom:20px;"></div>
 
-      <!-- คนขับ -->
-      <div style="font-family:'Prompt',sans-serif;font-weight:700;font-size:14px;color:#1E293B;margin-bottom:10px;display:flex;align-items:center;gap:8px;">
-        👤 คนขับ
-        <span id="dispatch-drv-count" style="font-size:11px;font-weight:600;color:#64748B;background:#F1F5F9;padding:2px 8px;border-radius:10px;"></span>
-      </div>
-      <div id="dispatch-drivers" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:24px;"></div>
-
-      <!-- บันทึกล่าสุด -->
-      <div style="font-family:'Prompt',sans-serif;font-weight:700;font-size:14px;color:#475569;margin-bottom:10px;">📋 บันทึกล่าสุด</div>
-      <div style="overflow-x:auto;border-radius:12px;border:1px solid #E2E8F0;">
-        <table style="width:100%;border-collapse:collapse;font-size:12px;">
-          <thead><tr style="background:#F8FAFC;">
-            <th style="padding:10px 14px;text-align:left;color:#64748B;font-weight:600;border-bottom:1px solid #E2E8F0;">รถ</th>
-            <th style="padding:10px 14px;text-align:left;color:#64748B;font-weight:600;border-bottom:1px solid #E2E8F0;">คนขับ</th>
-            <th style="padding:10px 14px;text-align:left;color:#64748B;font-weight:600;border-bottom:1px solid #E2E8F0;">ออก</th>
-            <th style="padding:10px 14px;text-align:left;color:#64748B;font-weight:600;border-bottom:1px solid #E2E8F0;">กลับ</th>
-            <th style="padding:10px 14px;text-align:left;color:#64748B;font-weight:600;border-bottom:1px solid #E2E8F0;">โครงการ</th>
-            <th style="padding:10px 14px;text-align:left;color:#64748B;font-weight:600;border-bottom:1px solid #E2E8F0;">บันทึกกลับโดย</th>
-          </tr></thead>
-          <tbody id="dispatch-today-body"></tbody>
-        </table>
+      <!-- ประวัติวันนี้ -->
+      <div style="font-family:'Prompt',sans-serif;font-weight:700;font-size:13px;color:#475569;margin-bottom:8px;">📋 บันทึกวันนี้</div>
+      <div class="card" style="overflow:hidden;">
+        <div style="display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1.2fr;padding:9px 14px;background:#F8FAFC;border-bottom:2px solid #E2E8F0;font-size:11px;font-weight:700;color:#64748B;gap:8px;text-transform:uppercase;">
+          <span>รถ</span><span>คนขับ</span><span>ออก</span><span>กลับ</span><span>โครงการ/หมายเหตุ</span>
+        </div>
+        <div id="dispatch-today-body"></div>
       </div>
     </div>
+
+    <!-- ██ HISTORY ██ -->
     <div id="tab-history" class="hidden">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
         <div style="font-family:'Prompt',sans-serif;font-weight:800;font-size:16px;color:#1D4ED8;">📊 ประวัติ</div>
@@ -865,8 +856,8 @@ button:active{transform:scale(.97);}
 <script>
 // Global error handler for debugging
 window.onerror = function(msg, src, line, col, err) {
-  var info = msg + ' | ' + (src||'') + ':' + line + ':' + col;
-  console.error('GLOBAL ERROR:', info, err&&err.stack?err.stack.slice(0,200):'');
+  var info = msg + ' | ' + (src||'') + ':' + line;
+  console.error('GLOBAL ERROR:', info);
   // แสดงใน loading screen เพื่อ debug
   var el = document.getElementById('pg-loading');
   if(el) {
@@ -886,76 +877,13 @@ try{
 // ══════════════════════════════════════════════════════════════
 var API_URL = 'https://script.google.com/macros/s/AKfycby9g6Hf9hSJFrgH60MOFiaTcg3g9oikUGv4sMevfPJLUD9eYnF4dFozME9iqyt5Q_sBHQ/exec'; // ← วาง Web App URL ตรงนี้ เช่น https://script.google.com/macros/s/xxx/exec
 // ── Firebase Config ──────────────────────────────────────────────────
-var FB_CONFIG = {
-  apiKey: "AIzaSyD9ii1TyiwqEKiuNrKfMGKjYOSdd2i2_Tw",
-  authDomain: "chakrawan-9cadc.firebaseapp.com",
-  databaseURL: "https://chakrawan-9cadc-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "chakrawan-9cadc",
-  storageBucket: "chakrawan-9cadc.firebasestorage.app",
-  messagingSenderId: "1834196657",
-  appId: "1:1834196657:web:97b48809dff913c2968c90"
-};
-var fbApp = null, fbDb = null, USE_FIREBASE = false;
-try {
-  fbApp = firebase.initializeApp(FB_CONFIG);
-  fbDb  = firebase.database();
-  USE_FIREBASE = true;
-  console.log('[Firebase] initialized ✅');
-} catch(e) {
-  console.warn('[Firebase] init failed:', e.message);
-}
-
-// ── Firebase helpers ──────────────────────────────────────────────────
-function fbRef(path){ return fbDb ? fbDb.ref(path) : null; }
-
-// fbSave: เขียน node ใหม่ใน Firebase
-function fbSave(sheet, obj){
-  if(!USE_FIREBASE||!fbDb) return;
-  var ref = fbDb.ref(sheet+'/'+obj.id);
-  ref.set(obj).then(function(){
-    console.log('[FB] saved', sheet, obj.id);
-  }).catch(function(e){ console.error('[FB] save error:', e.message); });
-}
-
-// fbUpdate: update fields ใน Firebase
-function fbUpdate(sheet, id, data){
-  if(!USE_FIREBASE||!fbDb) return;
-  var ref = fbDb.ref(sheet+'/'+id);
-  ref.update(data).then(function(){
-    console.log('[FB] updated', sheet, id);
-  }).catch(function(e){ console.error('[FB] update error:', e.message); });
-}
-
-// fbDelete: ลบ node
-function fbDelete(sheet, id){
-  if(!USE_FIREBASE||!fbDb) return;
-  fbDb.ref(sheet+'/'+id).remove();
-}
-
-// fbListen: real-time listener — เรียกครั้งเดียว จัดการ sync อัตโนมัติ
-function fbListen(sheet, localArr, onUpdate){
-  if(!USE_FIREBASE||!fbDb) return;
-  fbDb.ref(sheet).on('value', function(snapshot){
-    var data = snapshot.val() || {};
-    var arr = Object.values(data).filter(function(x){ return x && x.id; });
-    localArr.length = 0;
-    arr.forEach(function(x){ localArr.push(x); });
-    console.log('[FB] '+sheet+' updated: '+localArr.length+' records');
-    if(onUpdate) onUpdate();
-  });
-}
-
-// fbLoadOnce: โหลดครั้งเดียว (สำหรับ initial load)
-function fbLoadOnce(sheet, cb){
-  if(!USE_FIREBASE||!fbDb){ cb([]); return; }
-  fbDb.ref(sheet).once('value', function(snapshot){
-    var data = snapshot.val() || {};
-    var arr = Object.values(data).filter(function(x){ return x && x.id; });
-    cb(arr);
-  });
-}
-
-var USE_API = !!API_URL; // true = ใช้ Sheets, false = ใช้ memory (demo mode)
+var FB_CONFIG={apiKey:"AIzaSyD9ii1TyiwqEKiuNrKfMGKjYOSdd2i2_Tw",authDomain:"chakrawan-9cadc.firebaseapp.com",databaseURL:"https://chakrawan-9cadc-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"chakrawan-9cadc",storageBucket:"chakrawan-9cadc.firebasestorage.app",messagingSenderId:"1834196657",appId:"1:1834196657:web:97b48809dff913c2968c90"};
+var fbApp=null,fbDb=null,USE_FIREBASE=false;
+try{fbApp=firebase.initializeApp(FB_CONFIG);fbDb=firebase.database();USE_FIREBASE=true;console.log('[Firebase] initialized ✅');}catch(e){console.warn('[Firebase] init failed:',e.message);}
+function fbSave(sheet,obj){if(!USE_FIREBASE)return;fbDb.ref(sheet+'/'+obj.id).set(obj).catch(function(e){console.error('[FB] save error:',e.message);});}
+function fbUpdate(sheet,id,data){if(!USE_FIREBASE)return;fbDb.ref(sheet+'/'+id).update(data).catch(function(e){console.error('[FB] update error:',e.message);});}
+function fbListen(sheet,arr,cb){if(!USE_FIREBASE)return;fbDb.ref(sheet).on('value',function(snap){var d=snap.val()||{};var a=Object.values(d).filter(function(x){return x&&x.id;});arr.length=0;a.forEach(function(x){arr.push(x);});console.log('[FB] '+sheet+' updated: '+arr.length+' records');if(cb)cb();});}
+var USE_API=!!API_URL; // true = ใช้ Sheets, false = ใช้ memory (demo mode)
 var apiQueue = [], apiBusy = false;
 
 // ── API Helper ────────────────────────────────────────────────
@@ -1029,12 +957,7 @@ function apiCall(action, sheet, data, id, cb) {
   }
 }
 
-function apiSave(sheet, obj, cb){
-  // บันทึกลง Firebase (real-time)
-  fbSave(sheet, obj);
-  // บันทึกลง Sheets (backup)
-  apiCall('save', sheet, obj, null, cb);
-}
+function apiSave(sheet,obj,cb){fbSave(sheet,obj);apiCall('save',sheet,obj,null,cb);}
 
 // ── Upload รูปไป Google Drive ────────────────────────────────────────
 function uploadImageToDrive(base64DataUrl, filename, cb) {
@@ -1072,10 +995,7 @@ function uploadImageToDrive(base64DataUrl, filename, cb) {
     if(cb) cb(null, base64DataUrl);
   }
 }
-function apiUpdate(sheet, id, obj, cb){
-  fbUpdate(sheet, id, obj);
-  apiCall('update', sheet, obj, id, cb);
-}
+function apiUpdate(sheet,id,obj,cb){fbUpdate(sheet,id,obj);apiCall('update',sheet,obj,id,cb);}
 function apiDelete(sheet, id, cb)       { apiCall('delete', sheet, null, id,   cb); }
 
 // ── Load all data from Sheets ─────────────────────────────────
@@ -1244,7 +1164,6 @@ var STOCK_IN=[];
 var DRIVERS=[];
 var VEHICLES=[];
 var VEHICLE_LOGS=[];
-var VEHICLE_HISTORY=[];
 var ITEM_REPORTS=[];
 var TRIP_BOOKINGS=[]; // จองรถล่วงหน้า
 var NOTIFS=[];
@@ -1260,7 +1179,7 @@ var CC=[["#FEF3C7","#92400E"],["#DBEAFE","#1E40AF"],["#DCFCE7","#166534"],["#FEE
 var IST={ok:{label:"ปกติ",c:"#166534",bg:"#DCFCE7",bd:"#86EFAC",icon:"✅"},repair:{label:"กำลังซ่อม",c:"#92400E",bg:"#FEF3C7",bd:"#FDE68A",icon:"🔧"}};
 var RRST={pending:{bg:"#EDE9FE",bd:"#C4B5FD",c:"#5B21B6",t:"⏳ รอตรวจ"},verified_repair:{bg:"#FEF3C7",bd:"#FDE68A",c:"#92400E",t:"🔧 กำลังซ่อม"},done:{bg:"#DCFCE7",bd:"#86EFAC",c:"#166534",t:"✅ ซ่อมเสร็จ"},rejected:{bg:"#F1F5F9",bd:"#CBD5E1",c:"#475569",t:"✔ ปกติดี"}};
 var RRPRI={low:{c:"#059669",t:"🟢 ปกติ",o:3},medium:{c:"#D97706",t:"🟡 เร่งด่วน",o:2},high:{c:"#DC2626",t:"🔴 ด่วนมาก",o:1}};
-var VST={available:{label:"ปกติ",c:"#166534",bg:"#DCFCE7",bd:"#86EFAC",icon:"✅",dot:"#059669",color:"#166534"},out:{label:"ออกงาน",c:"#DC2626",bg:"#FEE2E2",bd:"#FECACA",icon:"🔴",dot:"#DC2626",color:"#DC2626"},ok:{label:"ปกติ",c:"#166534",bg:"#DCFCE7",bd:"#86EFAC",icon:"✅",dot:"#059669"},caution:{label:"ควรระวัง",c:"#92400E",bg:"#FEF3C7",bd:"#FDE68A",icon:"⚠️",dot:"#D97706"},repair:{label:"กำลังซ่อม",c:"#1E40AF",bg:"#DBEAFE",bd:"#93C5FD",icon:"🔧",dot:"#2563EB"},broken:{label:"ใช้ไม่ได้",c:"#991B1B",bg:"#FEE2E2",bd:"#FCA5A5",icon:"❌",dot:"#DC2626"}};
+var VST={ok:{label:"ปกติ",c:"#166534",bg:"#DCFCE7",bd:"#86EFAC",icon:"✅",dot:"#059669"},caution:{label:"ควรระวัง",c:"#92400E",bg:"#FEF3C7",bd:"#FDE68A",icon:"⚠️",dot:"#D97706"},repair:{label:"กำลังซ่อม",c:"#1E40AF",bg:"#DBEAFE",bd:"#93C5FD",icon:"🔧",dot:"#2563EB"},broken:{label:"ใช้ไม่ได้",c:"#991B1B",bg:"#FEE2E2",bd:"#FCA5A5",icon:"❌",dot:"#DC2626"}};
 var MFull=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
 var MTH=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 var LOW=5;
@@ -1383,6 +1302,11 @@ g("mark-all-btn").onclick=function(){NOTIFS.forEach(function(n){if(n.toId===me.i
 document.addEventListener("click",function(e){
   var p=g("notif-panel"),b=g("notif-bell");
   if(p&&b&&p.style.display==="flex"&&!p.contains(e.target)&&!b.contains(e.target))p.style.display="none";
+  var bp=document.getElementById("booking-panel");
+  var bb=document.getElementById("btn-quick-book");
+  if(bp&&bb&&bp.style.display==="flex"&&!bp.contains(e.target)&&e.target!==bb)bp.style.display="none";
+  var bp=document.getElementById("booking-panel"),bb=g("btn-quick-book");
+  if(bp&&bb&&bp.style.display==="flex"&&!bp.contains(e.target)&&!bb.contains(e.target))bp.style.display="none";
   var sr=g("g-search-result"),si=g("g-search");
   if(sr&&si&&sr.style.display!=="none"&&!sr.contains(e.target)&&e.target!==si)sr.style.display="none";
 });
@@ -1446,11 +1370,8 @@ function loginAs(u){
     console.log('[loginAs] verify localStorage:', check?'OK':'FAILED');
   }catch(e){ console.error('[loginAs] localStorage error:', e); }
   hide("pg-login");show("pg-app");
-  // bind sub-tab buttons
-  if(g("vsub-vehicles"))g("vsub-vehicles").onclick=function(){setVehSubTab("vehicles");};
-  if(g("vsub-drivers"))g("vsub-drivers").onclick=function(){setVehSubTab("drivers");};
-  // ── Firebase real-time listeners ─────────────────────────────────
   startFirebaseListeners();
+  window.migrateToFirebase=migrateToFirebase;window.VEHICLES=VEHICLES;window.DRIVERS=DRIVERS;
   g("hdr-name").textContent=u.name;
   g("hdr-role").innerHTML="<span class='tag' style='background:"+ROLE[u.role].color+"25;color:"+ROLE[u.role].color+";font-size:10px;'>"+ROLE[u.role].icon+" "+ROLE[u.role].label+"</span>";
   g("app-approver").value=u.name;g("req-date").value=todayStr();
@@ -1931,7 +1852,6 @@ function buildRrSels(){
   }).join('');
   var vsel=g("rr-veh-sel");if(vsel)vsel.innerHTML="<option value=''>-- เลือกรถ/เครื่องจักร --</option>"+VEHICLES.map(function(v){
     var st=VST[v.status]||VST.ok;
-  var isOut=v.status==="out";
     var isBeingRepaired=REPAIRS.some(function(r){return r.itemId===v.id&&(r.status==="pending"||r.status==="verified_repair");});
     return "<option value='"+v.id+"'"+(isBeingRepaired?" disabled":"")+">"
       +st.icon+" "+v.name+(v.plate?" ["+v.plate+"]":"")+(isBeingRepaired?" (กำลังซ่อมอยู่)":"")+"</option>";
@@ -2143,83 +2063,46 @@ function renderDriversMain(){
 function renderVehicles(){
   if(!me)return;
   var canEdit=can(me.role,"manageStock");
-
-  // filter buttons
   var fr=g("vehicle-filter-row");fr.innerHTML="";
   [{k:"all",l:"ทั้งหมด"},{k:"ok",l:"✅ ปกติ"},{k:"caution",l:"⚠️ ควรระวัง"},{k:"repair",l:"🔧 ซ่อม"},{k:"broken",l:"❌ ใช้ไม่ได้"}].forEach(function(f){
     var b=document.createElement("button");b.type="button";b.textContent=f.l;b.className="prd"+(vehicleFilter===f.k?" on":"");
     b.onclick=function(){vehicleFilter=f.k;document.querySelectorAll("#vehicle-filter-row .prd").forEach(function(x){x.classList.remove("on");});b.classList.add("on");renderVehicles();};
     fr.appendChild(b);
   });
-
-  var el=g("vehicle-list")||g("vh-body");if(!el){console.error("[renderVehicles] no container");return;}
-  console.log("[renderVehicles] el:"+el.id+" VEHICLES:"+VEHICLES.length);
-  var list=VEHICLES.filter(function(v){
-    if(vehicleFilter==="all") return true;
-    if(vehicleFilter==="ok") return v.status==="ok"||v.status==="available"||v.status==="out";
-    return v.status===vehicleFilter;
-  });
-
-  if(!list.length){el.innerHTML="<div style='text-align:center;color:#CBD5E1;padding:32px;'>ไม่มีรถในหมวดนี้</div>";return;}
-
-  // แบ่งกลุ่มตาม type
-  var groups={};
-  list.forEach(function(v){
-    var cat=v.type||"ไม่ระบุประเภท";
-    if(!groups[cat]) groups[cat]=[];
-    groups[cat].push(v);
-  });
-
-  var html="";
-  Object.keys(groups).sort().forEach(function(cat){
-    var vehs=groups[cat];
-    html+="<div style='margin-bottom:24px;'>"
-      +"<div style='font-family:Prompt,sans-serif;font-weight:700;font-size:13px;color:#1D4ED8;"
-      +"padding:8px 14px;background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;"
-      +"margin-bottom:12px;display:flex;align-items:center;gap:8px;'>"
-      +"🚛 "+cat
-      +"<span style='font-size:11px;font-weight:600;color:#64748B;background:#fff;padding:1px 8px;border-radius:8px;'>"+vehs.length+" คัน</span>"
+  if(canEdit)show("btn-add-vehicle");else hide("btn-add-vehicle");
+  var list=vehicleFilter==="all"?VEHICLES:VEHICLES.filter(function(v){return v.status===vehicleFilter;});
+  var el=g("vehicle-list");if(!el)return;
+  if(!list.length){el.style.display="block";el.innerHTML="<div style='text-align:center;color:#CBD5E1;padding:36px;'>ไม่มีรถ/เครื่องจักรในระบบ</div>";return;}
+  el.style.display="grid";el.style.gridTemplateColumns="repeat(auto-fill,minmax(210px,1fr))";el.style.gap="14px";
+  el.innerHTML=list.map(function(v){
+    var st=VST[v.status]||VST.ok;
+    var thumb=v.img?"<img src='"+v.img+"' style='width:100%;height:120px;object-fit:cover;display:block;border-radius:12px 12px 0 0;' data-vview='"+v.id+"'/>"
+      :"<div style='width:100%;height:120px;background:linear-gradient(135deg,#1E293B,#475569);border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:center;font-size:40px;' data-vview='"+v.id+"'>🚛</div>";
+    return "<div class='card vcard' style='overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;'>"+thumb
+      +"<div style='padding:11px 12px;'>"
+      +"<div style='display:flex;align-items:center;gap:5px;margin-bottom:2px;' data-vview='"+v.id+"'>"
+      +"<div style='width:7px;height:7px;background:"+st.dot+";border-radius:50%;flex-shrink:0;box-shadow:0 0 4px "+st.dot+";'></div>"
+      +"<div style='font-weight:700;font-size:13px;color:#1E293B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+v.name+"</div>"
       +"</div>"
-      +"<div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;'>"
-      +vehs.map(function(v){return vehicleCard(v,canEdit);}).join("")
-      +"</div>"
-      +"</div>";
-  });
-  el.innerHTML=html;
-
-  // bind buttons
-  el.querySelectorAll("[data-vedit]").forEach(function(b){b.onclick=function(){openVehicleEdit(b.dataset.vedit);};});
-  el.querySelectorAll("[data-vdel]").forEach(function(b){b.onclick=function(){deleteVehicle(b.dataset.vdel);};});
-  el.querySelectorAll("[data-vlog]").forEach(function(b){b.onclick=function(){openVehicleLog(b.dataset.vlog);};});
+      +(v.plate?"<div style='font-size:10px;color:#1D4ED8;font-weight:700;margin-bottom:2px;'>🪪 "+v.plate+"</div>":"")
+      +(v.driver?"<div style='font-size:10px;color:#64748B;margin-bottom:4px;'>👤 "+v.driver+"</div>":"")
+      +"<div style='display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:"+st.bg+";color:"+st.c+";border:1px solid "+st.bd+";'>"+st.icon+" "+st.label+"</div>"
+      +(v.note?"<div style='font-size:11px;color:#475569;background:#F8FAFC;border-radius:6px;padding:5px 8px;border:1px solid #E2E8F0;margin-top:6px;'>"+(v.note.length>50?v.note.slice(0,50)+"…":v.note)+"</div>":"")
+      +(canEdit?"<div style='display:flex;gap:4px;margin-top:8px;justify-content:flex-end;'><button type='button' class='bp2' style='padding:4px 8px;font-size:11px;' data-vlog='"+v.id+"'>📋</button><button type='button' class='bg' style='padding:4px 8px;font-size:11px;' data-vedit='"+v.id+"'>✏️</button><button type='button' class='bd' style='padding:4px 8px;font-size:11px;' data-vdel='"+v.id+"'>🗑️</button></div>":"")
+      +"</div></div>";
+  }).join("");
+  el.querySelectorAll("[data-vview]").forEach(function(b){b.onclick=function(){openVehicleDetail(b.dataset.vview);};});
+  el.querySelectorAll("[data-vlog]").forEach(function(b){b.onclick=function(e){e.stopPropagation();openVehicleLog(b.dataset.vlog);};});
+  el.querySelectorAll("[data-vedit]").forEach(function(b){b.onclick=function(e){e.stopPropagation();openVehicleModal(b.dataset.vedit);};});
+  el.querySelectorAll("[data-vdel]").forEach(function(b){b.onclick=function(e){e.stopPropagation();if(confirm("ลบรายการนี้?")){VEHICLES=VEHICLES.filter(function(x){return x.id!==b.dataset.vdel;});renderVehicles();}};});
 }
-
-function vehicleCard(v,canEdit){
-  try{
-  var st=VST[v.status]||VST.ok;
-  var isOut=v.status==="out";
-  return "<div class='card' style='padding:0;overflow:hidden;border:1.5px solid #E2E8F0;'>"
-    +"<div style='height:90px;background:linear-gradient(135deg,#1E293B,#334155);display:flex;align-items:center;justify-content:center;position:relative;'>"
-    +(v.img?"<img src='"+v.img+"' style='width:100%;height:100%;object-fit:cover;position:absolute;inset:0;'>":"<span style='font-size:40px;'>🚛</span>")
-    +"</div>"
-    +"<div style='padding:12px;'>"
-    +"<div style='display:flex;align-items:center;gap:6px;margin-bottom:6px;'>"
-    +"<span style='font-size:10px;padding:2px 8px;border-radius:10px;font-weight:700;background:"+st.color+"20;color:"+st.color+";'>"+st.icon+" "+st.label+"</span>"
-    +(isOut?"<span style='font-size:10px;padding:2px 6px;border-radius:8px;font-weight:700;background:#FEE2E2;color:#DC2626;'>🔴 ออกงาน</span>":"")
-    +"</div>"
-    +"<div style='font-weight:700;font-size:14px;color:#1E293B;margin-bottom:2px;'>"+v.name+"</div>"
-    +(v.plate?"<div style='font-size:11px;color:#94A3B8;'>🪪 "+v.plate+"</div>":"")
-    +(isOut?"<div style='font-size:11px;color:#DC2626;margin-top:4px;'>👤 "+v.currentDriver+(v.currentProj?" · "+v.currentProj:"")+"</div>":"")
-    +(v.note&&!isOut?"<div style='font-size:11px;color:#64748B;margin-top:4px;'>📝 "+v.note+"</div>":"")
-    +(canEdit?"<div style='display:flex;gap:6px;margin-top:10px;'>"
-      +"<button type='button' class='bp' style='padding:5px 8px;font-size:11px;' data-vlog='"+v.id+"'>📋</button>"
-      +"<button type='button' class='bw' style='padding:5px 8px;font-size:11px;' data-vedit='"+v.id+"'>✏️</button>"
-      +"<button type='button' class='bd' style='padding:5px 8px;font-size:11px;' data-vdel='"+v.id+"'>🗑️</button>"
-      +"</div>":"")
-    +"</div></div>";
-
-  }catch(e){console.error("[vehicleCard] error:",v.name,e.message);return "";}}
-
-
+if(g("btn-add-vehicle"))g("btn-add-vehicle").onclick=function(){openVehicleModal(null);};
+if(g("vsub-vehicles"))g("vsub-vehicles").onclick=function(){setVehSubTab("vehicles");};
+if(g("vsub-drivers"))g("vsub-drivers").onclick=function(){setVehSubTab("drivers");};
+if(g("btn-add-driver-direct"))g("btn-add-driver-direct").onclick=function(){
+  hide("drv-add-err");g("drv-name").value="";g("drv-phone").value="";g("drv-note").value="";
+  renderDriverList();openMod("mod-drivers");
+};
 function buildVehicleDriverSel(){
   var sel=g("v-driver-sel"); if(!sel) return;
   sel.innerHTML="<option value=''>-- เลือกคนขับประจำ --</option>"
@@ -2291,7 +2174,6 @@ g("v-save").onclick=function(){
 function openVehicleDetail(id){
   viewVehicleId=id;var v=VEHICLES.filter(function(x){return x.id===id;})[0];if(!v)return;
   var st=VST[v.status]||VST.ok;
-  var isOut=v.status==="out";
   g("vd-header").innerHTML="<div style='display:flex;align-items:center;gap:12px;'>"
     +"<div style='width:42px;height:42px;background:"+st.bg+";border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid "+st.bd+";'>"+st.icon+"</div>"
     +"<div style='flex:1;'><div style='font-weight:800;font-size:16px;color:#1E293B;'>"+v.name+"</div>"
@@ -2814,196 +2696,256 @@ if(g("drv-edit-save"))g("drv-edit-save").onclick=function(){
 // ─── DISPATCH (เรียกใช้รถ) ────────────────────────────────────────
 var dispatchReturnId = null;
 
-// ── Firebase Real-time Listeners ─────────────────────────────────────
-var _fbListenersStarted = false;
+// ── Firebase Listeners + Migrate ─────────────────────────────────────
+var _fbStarted=false;
 function startFirebaseListeners(){
-  if(_fbListenersStarted || !USE_FIREBASE) return;
-  _fbListenersStarted = true;
+  if(_fbStarted||!USE_FIREBASE)return;
+  _fbStarted=true;
   console.log('[FB] Starting real-time listeners...');
-
-  // VEHICLES — สำคัญมาก real-time
-  fbListen('VEHICLES', VEHICLES, function(){
-    VEHICLES.forEach(function(v){
-      if(!v.status||v.status==='ok') v.status='available';
-      if(!v.noteImgs) v.noteImgs=[];
-    });
-    renderDispatch();
-    renderVehicles();
-    buildTabs();
-  });
-
-  // VEHICLE_HISTORY — ประวัติ
-  fbListen('VEHICLE_HISTORY', VEHICLE_HISTORY, function(){
-    renderDispatch();
-  });
-
-  // REQS — คำขอเบิก
-  fbListen('REQS', REQS, function(){
-    renderReqList();
-    buildTabs();
-  });
-
-  // ITEMS — สินค้า/วัสดุ
-  fbListen('ITEMS', ITEMS, function(){
-    renderStock();
-  });
-
-  // REPAIRS — แจ้งซ่อม
-  fbListen('REPAIRS', REPAIRS, function(){
-    renderRepairList();
-    buildTabs();
-  });
-
-  // NOTIFS — การแจ้งเตือน
-  fbListen('NOTIFS', NOTIFS, function(){
-    updateBell();
-  });
-
+  fbListen('VEHICLES',VEHICLES,function(){VEHICLES.forEach(function(v){if(!v.status||v.status==='ok')v.status='available';if(!v.noteImgs)v.noteImgs=[];});renderDispatch();renderVehicles();buildTabs();});
+  fbListen('VEHICLE_HISTORY',VEHICLE_HISTORY,function(){renderDispatch();});
+  fbListen('REQS',REQS,function(){renderReqList();buildTabs();});
+  fbListen('ITEMS',ITEMS,function(){renderStock();});
+  fbListen('REPAIRS',REPAIRS,function(){renderRepairList();buildTabs();});
+  fbListen('NOTIFS',NOTIFS,function(){updateBell();});
   console.log('[FB] All listeners active ✅');
 }
-
-// ── Migrate Sheets data → Firebase (รันครั้งเดียว) ──────────────────
 function migrateToFirebase(){
-  if(!USE_FIREBASE){alert("Firebase ไม่ได้เชื่อมต่อ");return;}
-  var sheets = [
-    {name:'USERS', data:USERS},
-    {name:'ITEMS', data:ITEMS},
-    {name:'VEHICLES', data:VEHICLES},
-    {name:'DRIVERS', data:DRIVERS},
-    {name:'PROJECTS', data:PROJECTS},
-    {name:'REQS', data:REQS},
-    {name:'REPAIRS', data:REPAIRS},
-    {name:'NOTIFS', data:NOTIFS},
-    {name:'VEHICLE_HISTORY', data:VEHICLE_HISTORY},
-    {name:'STOCK_IN', data:STOCK_IN},
-  ];
-  var total = 0;
-  sheets.forEach(function(s){
-    s.data.forEach(function(obj){
-      if(obj && obj.id){
-        fbDb.ref(s.name+'/'+obj.id).set(obj);
-        total++;
-      }
-    });
-    console.log('[Migrate] '+s.name+': '+s.data.length+' records');
-  });
-  console.log('[Migrate] Done! Total: '+total+' records');
-  alert('✅ Migrate สำเร็จ! '+total+' records ส่งไป Firebase แล้วครับ');
+  if(!USE_FIREBASE){alert("Firebase not connected");return;}
+  var sheets=[{n:'USERS',d:USERS},{n:'ITEMS',d:ITEMS},{n:'VEHICLES',d:VEHICLES},{n:'DRIVERS',d:DRIVERS},{n:'PROJECTS',d:PROJECTS},{n:'REQS',d:REQS},{n:'REPAIRS',d:REPAIRS},{n:'NOTIFS',d:NOTIFS},{n:'STOCK_IN',d:STOCK_IN},{n:'VEHICLE_HISTORY',d:VEHICLE_HISTORY}];
+  var total=0;
+  sheets.forEach(function(s){s.d.forEach(function(obj){if(obj&&obj.id){fbSave(s.n,obj);total++;}});});
+  alert('✅ Migrate done! '+total+' records');
 }
-
 
 function renderDispatch(){
   if(!me) return;
-  var canManage=can(me.role,"approveReq");
-  var outBtn=g("btn-dispatch-out");
-  if(outBtn) outBtn.style.display=canManage?"inline-flex":"none";
+  var today = todayStr();
+  var canManage = can(me.role,"approveReq"); // manager/supervisor เท่านั้น
+  console.log('[Dispatch] today='+today+' VEHICLE_LOGS='+VEHICLE_LOGS.length+' dates='+VEHICLE_LOGS.slice(0,3).map(function(l){return l.date+'|'+l.vehicleName+'|in='+l.timeIn;}).join(','));
 
-  // ── รถทุกคัน ─────────────────────────────────────────────────────
-  var vehEl=g("dispatch-vehicles");
-  var vehCount=g("dispatch-veh-count");
-  if(vehEl){
-    if(vehCount) vehCount.textContent=VEHICLES.length+" คัน";
-    // แบ่งกลุ่มตาม type
-    var vehGroups={};
-    VEHICLES.forEach(function(v){
-      var cat=v.type||"ไม่ระบุประเภท";
-      if(!vehGroups[cat]) vehGroups[cat]=[];
-      vehGroups[cat].push(v);
-    });
-    var vehHtml="";
-    Object.keys(vehGroups).sort().forEach(function(cat){
-      var vehs=vehGroups[cat];
-      vehHtml+="<div style='margin-bottom:20px;'>"
-        +"<div style='font-family:Prompt,sans-serif;font-weight:700;font-size:13px;color:#1D4ED8;"
-        +"padding:8px 14px;background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;"
-        +"margin-bottom:10px;display:flex;align-items:center;gap:8px;'>"
-        +"🚛 "+cat
-        +"<span style='font-size:11px;font-weight:600;color:#64748B;background:#fff;padding:1px 8px;border-radius:8px;'>"+vehs.length+" คัน</span>"
-        +"</div>"
-        +"<div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;'>"
-        +vehs.map(function(v){
-          var isOut=v.status==="out",isRepair=v.status==="repair"||v.status==="broken";
-          var bg=isRepair?"#EFF6FF":isOut?"#FEF2F2":"#F0FDF4";
-          var bd=isRepair?"#BFDBFE":isOut?"#FECACA":"#BBF7D0";
-          var dot=isRepair?"#2563EB":isOut?"#DC2626":"#16A34A";
-          var stxt=isRepair?"🔧 กำลังซ่อม":isOut?"🔴 "+(v.currentDriver||"")+(v.currentProj?" → "+v.currentProj:""):"🟢 ว่าง";
-          return "<div style='background:"+bg+";border:1.5px solid "+bd+";border-radius:12px;padding:12px;'>"
-            +"<div style='display:flex;align-items:center;gap:6px;margin-bottom:6px;'>"
-            +"<div style='width:9px;height:9px;border-radius:50%;background:"+dot+";flex-shrink:0;'></div>"
-            +"<b style='flex:1;font-size:13px;'>"+v.name+"</b>"
-            +(v.plate?"<span style='font-size:10px;color:#1D4ED8;background:#DBEAFE;padding:2px 6px;border-radius:8px;font-weight:700;'>"+v.plate+"</span>":"")
+  // ── bind ปุ่มใน dispatch tab ──────────────────────────────────────
+  var dispHead = g("btn-dispatch-out");
+  if(dispHead) dispHead.style.display = canManage ? "inline-flex" : "none";
+  var qbBtn = g("btn-quick-book");
+  if(qbBtn){
+    qbBtn.style.display = "inline-flex";
+    qbBtn.onclick = function(){toggleBookingPanel();};
+    // badge จำนวนการจองวันนี้
+    var todayBookCnt = TRIP_BOOKINGS.filter(function(b){return b.date===today&&b.status!=="rejected";}).length;
+    qbBtn.textContent = "📅 จองรถ"+(todayBookCnt>0?" ("+todayBookCnt+")":"");
+  }
+
+  // ── การจองล่วงหน้า (รอ confirm) ──────────────────────────────────
+  var pendingBooks = TRIP_BOOKINGS.filter(function(b){
+    return b.date===today && b.status==="pending";
+  });
+  var bookEl = g("dispatch-bookings"); 
+  if(bookEl){
+    if(pendingBooks.length){
+      bookEl.style.display="block";
+      var bookHtml = pendingBooks.map(function(b){
+        return "<div style='background:#FEF3C7;border:1.5px solid #FDE68A;border-radius:12px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;'>"
+          +"<div style='flex:1;min-width:160px;'>"
+          +"<div style='font-weight:700;font-size:13px;color:#92400E;'>📅 "+b.vehicleName+" — "+b.driver+"</div>"
+          +"<div style='font-size:12px;color:#475569;margin-top:3px;'>🕐 นัดออก "+b.scheduledTime+(b.proj?" · 📍 "+b.proj:"")+"</div>"
+          +(b.note?"<div style='font-size:11px;color:#64748B;'>📝 "+b.note+"</div>":"")
+          +"<div style='font-size:11px;color:#94A3B8;margin-top:2px;'>จองโดย: "+b.createdBy+"</div>"
+          +"</div>"
+          +(canManage
+            ?"<div style='display:flex;gap:6px;flex-direction:column;'>"
+            +"<button type='button' class='bs' style='padding:6px 12px;font-size:12px;white-space:nowrap;' data-book-confirm='"+b.id+"'>✅ ออกแล้ว</button>"
+            +"<button type='button' class='bd' style='padding:5px 10px;font-size:11px;' data-book-cancel='"+b.id+"'>ยกเลิก</button>"
             +"</div>"
-            +"<div style='font-size:11px;color:#475569;margin-bottom:8px;font-weight:600;'>"+stxt+"</div>"
-            +(isOut&&canManage?"<button type='button' class='bs' style='width:100%;padding:6px;font-size:11px;' data-ret='"+v.id+"'>✅ บันทึกกลับ</button>":"")
-            +(!isOut&&!isRepair&&canManage?"<button type='button' class='bp2' style='width:100%;padding:6px;font-size:11px;' data-out='"+v.id+"'>🚛 ส่งออกงาน</button>":"")
-            +(isRepair?"<div style='text-align:center;font-size:11px;color:#1E40AF;font-weight:700;background:#DBEAFE;border-radius:6px;padding:4px;'>🔧 ไม่พร้อม</div>":"")
-            +"</div>";
-        }).join("")
-        +"</div></div>";
+            :"<span style='font-size:11px;padding:4px 10px;background:#FEF3C7;color:#92400E;border-radius:8px;font-weight:700;'>⏳ รอ confirm</span>")
+          +"</div>";
+      }).join("");
+      bookEl.innerHTML="<div style='font-family:Prompt,sans-serif;font-weight:700;font-size:13px;color:#D97706;margin-bottom:8px;'>📅 นัดหมายรอออกวันนี้</div>"+bookHtml;
+      bookEl.querySelectorAll("[data-book-confirm]").forEach(function(b){
+        b.onclick=function(){confirmBooking(b.dataset.bookConfirm);};
+      });
+      bookEl.querySelectorAll("[data-book-cancel]").forEach(function(b){
+        b.onclick=function(){
+          TRIP_BOOKINGS=TRIP_BOOKINGS.filter(function(x){return x.id!==b.dataset.bookCancel;});
+          renderDispatch();
+        };
+      });
+    }else{
+      bookEl.style.display="none";
+    }
+  }
+
+  // ── สถานะรถ ──────────────────────────────────────────────────────
+  var vehEl = g("dispatch-veh-status"); if(!vehEl) return;
+  if(!VEHICLES.length){
+    vehEl.innerHTML="<div style='color:#CBD5E1;font-size:13px;padding:16px;'>ยังไม่มีรถในระบบ</div>";
+  } else {
+    vehEl.innerHTML = VEHICLES.map(function(v){
+      // ใช้ VEHICLES.status โดยตรง
+      var isOut = v.status==='out';
+      var activeLog = isOut ? v : null;
+      if(activeLog){activeLog.vehicleName=v.name;activeLog.vehicleId=v.id;activeLog.driver=v.currentDriver||v.driver;}
+      var isOut = !!activeLog;
+      var isRepair = (v.status==="repair" || v.status==="broken");
+      // สีตาม priority: ซ่อม > ออกงาน > ว่าง
+      var bg = isRepair?"#EFF6FF":(isOut?"#FEE2E2":"#F0FDF4");
+      var bd = isRepair?"#BFDBFE":(isOut?"#FCA5A5":"#86EFAC");
+      var dot = isRepair?"#2563EB":(isOut?"#DC2626":"#059669");
+      var vst = VST[v.status]||VST.ok;
+      var statusTxt = isRepair
+        ? vst.icon+" "+vst.label+(v.note?" — "+v.note.slice(0,30):"")
+        : (isOut
+          ? "🔴 ออกงาน — "+(activeLog.driver||"")+(activeLog.proj?" → "+activeLog.proj:"")
+          : "🟢 ว่าง พร้อมใช้งาน");
+      var booked = TRIP_BOOKINGS.filter(function(b){return b.vehicleId===v.id&&b.date===today&&b.status==="pending";})[0];
+      // ผู้รับเหมาขอใช้รถ pending
+      var reqPending = TRIP_BOOKINGS.filter(function(b){return b.vehicleId===v.id&&b.status==="requested"&&b.date===today;})[0];
+      return "<div class='card' style='padding:12px 14px;background:"+bg+";border:1.5px solid "+bd+";'>"
+        +"<div style='display:flex;align-items:center;gap:8px;margin-bottom:6px;'>"
+        +"<div style='width:8px;height:8px;background:"+dot+";border-radius:50%;box-shadow:0 0 4px "+dot+";flex-shrink:0;'></div>"
+        +"<div style='font-weight:700;font-size:13px;color:#1E293B;flex:1;'>"+v.name+"</div>"
+        +(v.plate?"<span style='font-size:10px;color:#1D4ED8;font-weight:700;background:#DBEAFE;padding:2px 7px;border-radius:10px;'>"+v.plate+"</span>":"")
+        +"</div>"
+        +(booked&&!isOut&&!isRepair?"<div style='font-size:11px;color:#D97706;font-weight:600;margin-bottom:4px;'>📅 นัด "+booked.driver+" เวลา "+booked.scheduledTime+"</div>":"")
+        +(reqPending&&canManage?"<div style='font-size:11px;color:#7C3AED;font-weight:600;margin-bottom:4px;'>🙋 "+reqPending.driver+" ขอใช้รถ</div>":"")
+        +"<div style='font-size:11px;color:#475569;margin-bottom:8px;'>"+statusTxt+"</div>"
+        // ปุ่ม admin
+        +(isOut&&canManage?"<button type='button' class='bs' style='width:100%;padding:6px;font-size:12px;' data-ret='"+activeLog.id+"'>✅ บันทึกเวลากลับ</button>":"")
+        +(!isOut&&!isRepair&&canManage?"<button type='button' class='bp2' style='width:100%;padding:6px;font-size:12px;margin-bottom:4px;' data-out='"+v.id+"'>🚛 ส่งออกงาน</button>":"")
+        // ปุ่ม contractor ขอใช้รถ
+        +(!isOut&&!isRepair&&me.role==="contractor"?"<button type='button' class='bw' style='width:100%;padding:6px;font-size:12px;' data-req-veh='"+v.id+"'>🙋 ขอใช้รถ</button>":"")
+        // แสดงสถานะซ่อมชัดๆ
+        +(isRepair?"<div style='background:#DBEAFE;border-radius:7px;padding:4px 8px;font-size:11px;color:#1E40AF;font-weight:700;text-align:center;'>🔧 ไม่พร้อมใช้งาน — รอซ่อมเสร็จ</div>":"")
+        // admin approve/reject request
+        +(reqPending&&canManage
+          ?"<div style='display:flex;gap:4px;margin-top:4px;'><button type='button' class='bs' style='flex:1;padding:5px;font-size:11px;' data-approve-req='"+reqPending.id+"'>✅ อนุมัติ</button><button type='button' class='bd' style='flex:1;padding:5px;font-size:11px;' data-reject-req='"+reqPending.id+"'>❌ ปฏิเสธ</button></div>"
+          :"")
+        +"</div>";
+    }).join("");
+    vehEl.querySelectorAll("[data-ret]").forEach(function(b){b.onclick=function(){openDispatchReturn(b.dataset.ret);};});
+    vehEl.querySelectorAll("[data-out]").forEach(function(b){b.onclick=function(){openDispatchOut(b.dataset.out);};});
+    vehEl.querySelectorAll("[data-book]").forEach(function(b){b.onclick=function(){openBookingModal(b.dataset.book);};});
+    vehEl.querySelectorAll("[data-req-veh]").forEach(function(b){b.onclick=function(){openVehRequest(b.dataset.reqVeh);};});
+    vehEl.querySelectorAll("[data-approve-req]").forEach(function(b){b.onclick=function(){approveVehRequest(b.dataset.approveReq,true);};});
+    vehEl.querySelectorAll("[data-reject-req]").forEach(function(b){b.onclick=function(){approveVehRequest(b.dataset.rejectReq,false);};});
+  }
+
+  // ── สถานะคนขับ ───────────────────────────────────────────────────
+  var drvEl = g("dispatch-driver-status"); if(!drvEl) return;
+  if(!DRIVERS.length){
+    drvEl.innerHTML="<div style='color:#CBD5E1;font-size:13px;padding:8px;'>ยังไม่มีคนขับ — เพิ่มในเมนูรถ → แท็บคนขับ</div>";
+  } else {
+    drvEl.innerHTML = DRIVERS.map(function(d){
+      var activeVeh=VEHICLES.filter(function(v){return v.status==='out'&&v.currentDriver===d.name;})[0];
+      var activeLog=activeVeh?{vehicleId:activeVeh.id,vehicleName:activeVeh.name,driver:activeVeh.currentDriver,proj:activeVeh.currentProj,timeOut:activeVeh.timeOut,id:activeVeh.id}:null;
+      var booked = TRIP_BOOKINGS.filter(function(b){
+        return b.driver===d.name && b.date===today && b.status==="pending";
+      })[0];
+      var isOut = !!activeLog;
+      var bg = isOut?"#FFF1F2":(booked?"#FFFBEB":"#F0FDF4");
+      var bd = isOut?"#FCA5A5":(booked?"#FDE68A":"#86EFAC");
+      var dotC = isOut?"#DC2626":(booked?"#D97706":"#059669");
+      return "<div class='card' style='padding:11px 14px;background:"+bg+";border:1.5px solid "+bd+";'>"
+        +"<div style='display:flex;align-items:center;gap:8px;margin-bottom:5px;'>"
+        +"<div style='width:8px;height:8px;border-radius:50%;background:"+dotC+";box-shadow:0 0 4px "+dotC+";flex-shrink:0;'></div>"
+        +"<div style='font-weight:700;font-size:13px;color:#1E293B;flex:1;'>"+d.name+"</div>"
+        +(d.phone?"<span style='font-size:10px;color:#1D4ED8;'>"+d.phone+"</span>":"")
+        +"</div>"
+        +"<div style='font-size:11px;font-weight:600;margin-bottom:6px;color:"+dotC+";'>"
+        +(isOut
+          ?"🔴 ติดงาน — "+activeLog.vehicleName+(activeLog.proj?" → "+activeLog.proj:"")
+          :(booked
+            ?"📅 นัด "+booked.scheduledTime+" — "+booked.vehicleName+(booked.proj?" → "+booked.proj:"")
+            :"🟢 ว่าง พร้อมใช้งาน"))
+        +"</div>"
+        +(canManage && !isOut
+          ?"<button type='button' class='bw' style='width:100%;padding:5px;font-size:11px;' data-book-driver='"+d.name+"'>📅 จองรถให้คนขับนี้</button>"
+          :"")
+        +"</div>";
+    }).join("");
+    drvEl.querySelectorAll("[data-book-driver]").forEach(function(b){
+      b.onclick=function(){openBookingModalForDriver(b.dataset.bookDriver);};
     });
-    vehEl.innerHTML=vehHtml;
-    vehEl.querySelectorAll("[data-ret]").forEach(function(b){var id=b.dataset.ret;b.onclick=function(){openDispatchReturn(id);};});
-    vehEl.querySelectorAll("[data-out]").forEach(function(b){var id=b.dataset.out;b.onclick=function(){openDispatchOut(id);};});
+  }
+
+    // ── คำขอรอ approve ────────────────────────────────────────────────
+  var reqWrap = g("dispatch-requests-wrap");
+  if(reqWrap && canManage){
+    var pendingReqs = TRIP_BOOKINGS.filter(function(b){return b.status==="requested";});
+    if(pendingReqs.length){
+      reqWrap.style.display="block";
+      reqWrap.innerHTML="<div style='font-family:Prompt,sans-serif;font-weight:700;font-size:13px;color:#7C3AED;margin-bottom:8px;'>🙋 คำขอใช้รถรออนุมัติ ("+pendingReqs.length+")</div>"
+        +pendingReqs.map(function(b){
+          var v=VEHICLES.filter(function(x){return x.id===b.vehicleId;})[0]||{};
+          return "<div style='background:#EDE9FE;border:1.5px solid #C4B5FD;border-radius:12px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;'>"
+            +"<div style='flex:1;min-width:140px;'>"
+            +"<div style='font-weight:700;font-size:13px;color:#5B21B6;'>🙋 "+b.driver+"</div>"
+            +"<div style='font-size:12px;color:#475569;margin-top:2px;'>🚛 "+b.vehicleName+" · 📅 "+b.date+(b.scheduledTime?" "+b.scheduledTime:"")+"</div>"
+            +"<div style='font-size:12px;color:#475569;'>📍 "+b.proj+"</div>"
+            +(b.note?"<div style='font-size:11px;color:#64748B;'>📝 "+b.note+"</div>":"")
+            +"<div style='font-size:11px;color:#94A3B8;'>ขอโดย: "+b.createdBy+" · "+fmtDT(b.createdAt)+"</div>"
+            +"</div>"
+            +"<div style='display:flex;gap:5px;flex-direction:column;'>"
+            +"<button type='button' class='bs' style='padding:6px 12px;font-size:12px;white-space:nowrap;' data-approve-req2='"+b.id+"'>✅ อนุมัติ</button>"
+            +"<button type='button' class='bd' style='padding:5px 10px;font-size:11px;' data-reject-req2='"+b.id+"'>❌ ปฏิเสธ</button>"
+            +"</div></div>";
+        }).join("");
+      reqWrap.querySelectorAll("[data-approve-req2]").forEach(function(b){b.onclick=function(){approveVehRequest(b.dataset.approveReq2,true);};});
+      reqWrap.querySelectorAll("[data-reject-req2]").forEach(function(b){b.onclick=function(){approveVehRequest(b.dataset.rejectReq2,false);};});
+    }else{
+      reqWrap.style.display="none";
+    }
   }
 
   // ── กำลังออกงาน ──────────────────────────────────────────────────
-  var actEl=g("dispatch-active");
-  if(actEl){
-    var outVehs=VEHICLES.filter(function(v){return v.status==="out";});
-    actEl.innerHTML=outVehs.length?outVehs.map(function(v){
-      return "<div style='background:#FEF2F2;border:1.5px solid #FECACA;border-radius:12px;padding:14px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;'>"
-        +"<div style='flex:1;'><b style='color:#DC2626;font-size:14px;'>🔴 "+v.name+"</b>"
-        +(v.plate?" <span style='font-size:10px;color:#1D4ED8;background:#DBEAFE;padding:1px 6px;border-radius:8px;'>"+v.plate+"</span>":"")
-        +"<div style='font-size:12px;color:#475569;margin-top:5px;'>👤 "+(v.currentDriver||"-")+(v.timeOut?" · ⏰ ออก "+v.timeOut:"")+(v.currentProj?" · 📍 "+v.currentProj:"")+"</div></div>"
-        +(canManage?"<button type='button' class='bs' style='padding:8px 16px;font-size:12px;white-space:nowrap;' data-ret2='"+v.id+"'>✅ บันทึกกลับ</button>":"")
+  var actEl = g("dispatch-active"); if(!actEl) return;
+  // ดึงรถที่ออกงานจาก VEHICLES โดยตรง
+  var activeLogs=VEHICLES.filter(function(v){return v.status==='out';}).map(function(v){
+    return {vehicleId:v.id,vehicleName:v.name,driver:v.currentDriver||v.driver,
+      timeOut:v.timeOut,proj:v.currentProj,note:v.note,logBy:v.driver,id:v.id};
+  });  if(!activeLogs.length){
+    actEl.innerHTML="<div style='color:#94A3B8;font-size:13px;padding:10px;'>ไม่มีรถออกงานอยู่ในขณะนี้</div>";
+  } else {
+    actEl.innerHTML = activeLogs.map(function(l){
+      return "<div class='card' style='padding:12px 16px;background:#FFF1F2;border:1.5px solid #FCA5A5;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;'>"
+        +"<div style='flex:1;min-width:160px;'>"
+        +"<div style='font-weight:700;font-size:13px;color:#991B1B;'>🔴 "+l.vehicleName+"</div>"
+        +"<div style='font-size:12px;color:#475569;margin-top:3px;'>👤 "+l.driver+" · ⏰ ออก "+l.timeOut+(l.proj?" · 📍 "+l.proj:"")+"</div>"
+        +(l.note?"<div style='font-size:11px;color:#64748B;margin-top:2px;'>📝 "+l.note+"</div>":"")
+        +"</div>"
+        +(can(me.role,"approveReq")
+          ?"<button type='button' class='bs' style='padding:7px 14px;font-size:13px;flex-shrink:0;' data-ret2='"+l.id+"'>✅ บันทึกกลับ</button>"
+          :"")
         +"</div>";
-    }).join(""):"<div style='color:#CBD5E1;font-size:13px;padding:12px;'>ไม่มีรถออกงานอยู่ในขณะนี้</div>";
-    actEl.querySelectorAll("[data-ret2]").forEach(function(b){var id=b.dataset.ret2;b.onclick=function(){openDispatchReturn(id);};});
+    }).join("");
+    actEl.querySelectorAll("[data-ret2]").forEach(function(b){
+      b.onclick=function(){openDispatchReturn(b.dataset.ret2);};
+    });
   }
 
-  // ── คนขับ ─────────────────────────────────────────────────────────
-  var drvEl=g("dispatch-drivers");
-  var drvCount=g("dispatch-drv-count");
-  if(drvEl){
-    if(drvCount) drvCount.textContent=DRIVERS.length+" คน";
-    drvEl.innerHTML=DRIVERS.map(function(d){
-      var busyVeh=VEHICLES.filter(function(v){return v.status==="out"&&v.currentDriver===d.name;})[0];
-      var isBusy=!!busyVeh;
-      var bg=isBusy?"#FEF2F2":"#F0FDF4";
-      var bd=isBusy?"#FECACA":"#BBF7D0";
-      var dot=isBusy?"#DC2626":"#16A34A";
-      var stxt=isBusy?"🔴 ติดงาน — "+busyVeh.name+(busyVeh.currentProj?" → "+busyVeh.currentProj:""):"🟢 ว่าง พร้อมใช้งาน";
-      return "<div style='background:"+bg+";border:1.5px solid "+bd+";border-radius:14px;padding:14px;'>"
-        +"<div style='display:flex;align-items:center;gap:10px;margin-bottom:8px;'>"
-        +(d.photo?"<img src='"+d.photo+"' style='width:40px;height:40px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid "+bd+";'>":"<div style='width:40px;height:40px;border-radius:50%;background:#E2E8F0;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;'>👤</div>")
-        +"<div style='flex:1;min-width:0;'>"
-        +"<div style='font-weight:700;font-size:13px;'>"+d.name+"</div>"
-        +(d.phone?"<div style='font-size:11px;color:#94A3B8;'>📞 "+d.phone+"</div>":"")
-        +"</div>"
-        +"<div style='width:10px;height:10px;border-radius:50%;background:"+dot+";box-shadow:0 0 6px "+dot+"55;flex-shrink:0;'></div>"
-        +"</div>"
-        +"<div style='font-size:11px;color:#475569;font-weight:600;'>"+stxt+"</div>"
-        +"</div>";
-    }).join("")||"<div style='color:#CBD5E1;font-size:13px;padding:12px;'>ยังไม่มีข้อมูลคนขับ</div>";
-  }
-
-  // ── บันทึกล่าสุด ──────────────────────────────────────────────────
-  var tbody=g("dispatch-today-body");
-  if(tbody){
-    var hist=(VEHICLE_HISTORY||[]).slice(0,30);
-    tbody.innerHTML=hist.length?hist.map(function(h){
-      return "<tr style='border-top:1px solid #F1F5F9;'>"
-        +"<td style='padding:10px 14px;font-weight:600;'>"+h.vehicleName+"</td>"
-        +"<td style='padding:10px 14px;color:#475569;'>"+h.driver+"</td>"
-        +"<td style='padding:10px 14px;color:#1D4ED8;font-weight:700;'>"+h.timeOut+"</td>"
-        +"<td style='padding:10px 14px;color:#059669;font-weight:700;'>"+(h.timeIn||"<span style='color:#CBD5E1;'>—</span>")+"</td>"
-        +"<td style='padding:10px 14px;color:#64748B;font-size:11px;'>"+(h.proj||"")+"</td>"
-        +"<td style='padding:10px 14px;color:#94A3B8;font-size:11px;'>"+(h.returnBy||"")+"</td>"
-        +"</tr>";
-    }).join(""):"<tr><td colspan='6' style='padding:24px;text-align:center;color:#CBD5E1;'>ยังไม่มีบันทึก</td></tr>";
+  // ── ประวัติวันนี้ ────────────────────────────────────────────────
+  // แสดงประวัติ 7 วันล่าสุดจาก VEHICLE_HISTORY
+  var sevenDaysAgo=new Date(); sevenDaysAgo.setDate(sevenDaysAgo.getDate()-7);
+  var todayLogs=(VEHICLE_HISTORY||[]).filter(function(l){
+    return new Date(l.createdAt||0)>=sevenDaysAgo;
+  }).sort(function(a,b){return new Date(b.createdAt||0)-new Date(a.createdAt||0);});
+  var tbody = g("dispatch-today-body"); if(!tbody) return;
+  if(!todayLogs.length){
+    tbody.innerHTML="<div style='padding:24px;text-align:center;color:#CBD5E1;'>ยังไม่มีบันทึกวันนี้</div>";
+  } else {
+    tbody.innerHTML = todayLogs.map(function(l,i){
+      var done = !!l.timeIn;
+      return "<div style='display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1.2fr;padding:10px 14px;border-bottom:1px solid #F1F5F9;background:"+(i%2===0?"#fff":"#FAFBFC")+";align-items:center;gap:8px;font-size:12px;'>"
+        +"<div style='font-weight:700;color:#1E293B;'>"+l.vehicleName+"</div>"
+        +"<div style='color:#475569;'>"+l.driver+"</div>"
+        +"<div style='color:#7C3AED;font-weight:700;'>"+l.timeOut+"</div>"
+        +"<div style='color:"+(done?"#059669":"#DC2626")+";font-weight:700;'>"+(done?l.timeIn:"—")+"</div>"
+        +"<div style='color:#64748B;'>"+(l.proj||"")+(l.note?"<br><span style='color:#94A3B8;font-size:11px;'>"+l.note+"</span>":"")+"</div></div>";
+    }).join("");
   }
 }
 
+// ── ส่งรถออก ──────────────────────────────────────────────────────
 function openDispatchOut(vehicleId){
   hide("dispatch-err");
   // Build selects
@@ -3011,7 +2953,6 @@ function openDispatchOut(vehicleId){
   if(vsel){
     vsel.innerHTML="<option value=''>-- เลือกรถ --</option>"+VEHICLES.map(function(v){
       var st=VST[v.status]||VST.ok;
-  var isOut=v.status==="out";
       var isRepair=v.status==="repair"||v.status==="broken";
       var isOut=VEHICLE_LOGS.filter(function(l){return l.vehicleId===v.id&&l.date===todayStr()&&!l.timeIn;}).length>0;
       if(isRepair||isOut) return "<option value='"+v.id+"' disabled style='color:#94A3B8;'>"
@@ -3037,83 +2978,6 @@ function openDispatchOut(vehicleId){
   g("do-note").value="";
   openMod("mod-dispatch-out");
 }
-function confirmDispatchOut(){
-  var vehId=g("do-veh")?g("do-veh").value:"";
-  var ds=g("do-drv-sel")?g("do-drv-sel").value:"";
-  var driver=ds==="__other__"?(g("do-drv-other")?g("do-drv-other").value.trim():""):ds;
-  var date=g("do-date")?g("do-date").value:todayStr();
-  var timeOut=g("do-time")?g("do-time").value:"";
-  var ps=g("do-proj-sel")?g("do-proj-sel").value:"";
-  var proj=ps==="__other__"?(g("do-proj-other")?g("do-proj-other").value.trim():""):ps;
-  var note=g("do-note")?g("do-note").value.trim():"";
-  var err=g("do-err");
-  if(!vehId){if(err){err.textContent="⚠️ กรุณาเลือกรถ";err.style.display="block";}return;}
-  if(!driver){if(err){err.textContent="⚠️ กรุณาระบุคนขับ";err.style.display="block";}return;}
-  if(!timeOut){if(err){err.textContent="⚠️ กรุณาระบุเวลาออก";err.style.display="block";}return;}
-  var veh=VEHICLES.filter(function(v){return v.id===vehId;})[0];if(!veh)return;
-  veh.status="out";veh.currentDriver=driver;veh.timeOut=timeOut;veh.outDate=date;veh.currentProj=proj;veh.updatedAt=new Date().toISOString();
-  // update Firebase ทันที (real-time)
-  fbUpdate("VEHICLES", vehId, {status:"out",currentDriver:driver,timeOut:timeOut,outDate:date,currentProj:proj,updatedAt:veh.updatedAt});
-  // update Sheets (backup)
-  apiCall("update","VEHICLES",{id:vehId,status:"out",currentDriver:driver,timeOut:timeOut,outDate:date,currentProj:proj,updatedAt:veh.updatedAt},vehId,function(e,res){
-    console.log("[dispatch-out]",res&&res.ok,res&&res.error||"");
-  });
-  addTicker("🚛 "+veh.name+" ออกงาน — "+driver+(proj?" → "+proj:""));
-  closeSimpleModal();renderDispatch();buildTabs();
-}
-
-function openDispatchReturn(vehicleId){
-  var veh=VEHICLES.filter(function(v){return v.id===vehicleId;})[0];if(!veh)return;
-  showSimpleModal("✅ บันทึกเวลากลับ",
-    "<div style='background:#F0FDF4;border:1px solid #86EFAC;border-radius:10px;padding:10px 14px;margin-bottom:14px;'>"
-    +"<b style='color:#166534;font-size:14px;'>🚛 "+veh.name+"</b>"
-    +"<div style='font-size:12px;color:#475569;margin-top:4px;'>👤 "+(veh.currentDriver||"-")+(veh.timeOut?" · ⏰ ออก "+veh.timeOut:"")+(veh.currentProj?" · 📍 "+veh.currentProj:"")+"</div></div>"
-    +"<div><label class='lbl'>เวลากลับ *</label><input id='ret-time' type='time' value='"+nowTimeStr()+"'/></div>"
-    +"<div class='mt'><label class='lbl'>หมายเหตุ</label><textarea id='ret-note' rows='2'></textarea></div>",
-    function(){confirmDispatchReturn(vehicleId);},"✅ บันทึกกลับ");
-}
-
-function confirmDispatchReturn(vehicleId){
-  var timeIn=g("ret-time")?g("ret-time").value:"";
-  var note=g("ret-note")?g("ret-note").value.trim():"";
-  if(!timeIn){alert("กรุณาระบุเวลากลับ");return;}
-  var veh=VEHICLES.filter(function(v){return v.id===vehicleId;})[0];if(!veh)return;
-  var hist={id:uid(),vehicleId:veh.id,vehicleName:veh.name,
-    driver:veh.currentDriver||"",date:veh.outDate||todayStr(),
-    timeOut:veh.timeOut||"",timeIn:timeIn,
-    proj:veh.currentProj||"",note:note,
-    logBy:veh.currentDriver||"",returnBy:me.name};
-  VEHICLE_HISTORY.unshift(hist);
-  apiSave("VEHICLE_HISTORY",hist);
-  veh.status="available";veh.currentDriver="";veh.timeOut="";veh.currentProj="";veh.outDate="";veh.updatedAt=new Date().toISOString();
-  // update Firebase ทันที (real-time)
-  fbUpdate("VEHICLES", veh.id, {status:"available",currentDriver:"",timeOut:"",outDate:"",currentProj:"",updatedAt:veh.updatedAt});
-  // update Sheets (backup)
-  apiCall("update","VEHICLES",{id:veh.id,status:"available",currentDriver:"",timeOut:"",outDate:"",currentProj:"",updatedAt:veh.updatedAt},veh.id,function(e,res){
-    console.log("[dispatch-return] VEHICLES updated:",res&&res.ok);
-  });
-  addTicker("✅ "+veh.name+" กลับแล้ว — "+hist.driver+" เวลา "+timeIn);
-  closeSimpleModal();renderDispatch();buildTabs();
-}
-
-var _sModal=null;
-function showSimpleModal(title,body,onOk,okLabel){
-  if(!_sModal){_sModal=document.createElement("div");_sModal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;";document.body.appendChild(_sModal);}
-  _sModal.innerHTML="<div class='modal' style='width:440px;max-height:90vh;overflow-y:auto;' onclick='event.stopPropagation()'>"
-    +"<div style='font-family:Prompt,sans-serif;font-weight:800;font-size:16px;color:#1E293B;margin-bottom:16px;'>"+title+"</div>"
-    +body
-    +"<div style='display:flex;gap:10px;justify-content:flex-end;margin-top:18px;'>"
-    +"<button type='button' class='bg' id='_sm_c' style='padding:10px 18px;'>ยกเลิก</button>"
-    +"<button type='button' class='bp2' id='_sm_ok' style='padding:10px 18px;'>"+(okLabel||"ยืนยัน")+"</button>"
-    +"</div></div>";
-  _sModal.style.display="flex";
-  _sModal.onclick=function(e){if(e.target===_sModal)closeSimpleModal();};
-  var ok=document.getElementById("_sm_ok");if(ok)ok.onclick=onOk;
-  var cc=document.getElementById("_sm_c");if(cc)cc.onclick=closeSimpleModal;
-}
-function closeSimpleModal(){if(_sModal)_sModal.style.display="none";}
-
-
 if(g("btn-dispatch-out"))g("btn-dispatch-out").onclick=function(){openDispatchOut("");};
 if(g("do-cancel"))g("do-cancel").onclick=function(){closeMod("mod-dispatch-out");};
 if(g("do-confirm"))g("do-confirm").onclick=function(){
@@ -3148,7 +3012,7 @@ if(g("do-confirm"))g("do-confirm").onclick=function(){
   var vehObj=VEHICLES.filter(function(x){return x.id===vehId;})[0];
   if(vehObj){vehObj.status="out";vehObj.currentDriver=driver;vehObj.timeOut=timeOut;vehObj.outDate=todayStr();vehObj.currentProj=proj;vehObj.timeIn="";vehObj.returnBy="";}
   console.log('[DO-CONFIRM] VEHICLES status=out driver='+driver);
-  addTicker("🚛 "+veh.name+" ออกงาน — "+driver+(proj?" → "+proj:""));
+  addTicker("✅ "+b.vehicleName+" ออกงานแล้ว — "+b.driver);
   renderDispatch();
 }
 
@@ -3239,25 +3103,14 @@ if (USE_API) {
   var el=document.getElementById('pg-loading');
   if(el){var sub=el.querySelector('div:last-child');if(sub)sub.textContent='Error: '+e.message;}
 }
-
-// ── Expose globals ──────────────────────────────────────────────────
-window.USERS=USERS; window.ITEMS=ITEMS; window.VEHICLES=VEHICLES;
-window.DRIVERS=DRIVERS; window.PROJECTS=PROJECTS; window.REQS=REQS;
-window.REPAIRS=REPAIRS; window.NOTIFS=NOTIFS; window.STOCK_IN=STOCK_IN;
-window.VEHICLE_HISTORY=VEHICLE_HISTORY; window.VEHICLE_LOGS=VEHICLE_LOGS;
-window.loadFromSheets=loadFromSheets; window.migrateToFirebase=migrateToFirebase;
-window.renderDispatch=renderDispatch; window.renderVehicles=renderVehicles;
-window.switchTab=switchTab;
-
 })();
 </script>
-
 <script>
 if('serviceWorker' in navigator){
-  window.addEventListener('load', function(){
+  window.addEventListener('load',function(){
     navigator.serviceWorker.register('sw.js')
-      .then(function(reg){ console.log('[SW] registered:', reg.scope); })
-      .catch(function(e){ console.log('[SW] failed:', e); });
+      .then(function(r){console.log('[SW] registered:',r.scope);})
+      .catch(function(e){console.log('[SW] failed:',e);});
   });
 }
 </script>
