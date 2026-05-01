@@ -856,8 +856,8 @@ button:active{transform:scale(.97);}
 <script>
 // Global error handler for debugging
 window.onerror = function(msg, src, line, col, err) {
-  var info = msg + ' | ' + (src||'') + ':' + line;
-  console.error('GLOBAL ERROR:', info);
+  var info = msg + ' | ' + (src||'') + ':' + line + ':' + col;
+  console.error('GLOBAL ERROR:', info, err&&err.stack?err.stack.slice(0,200):'');
   // แสดงใน loading screen เพื่อ debug
   var el = document.getElementById('pg-loading');
   if(el) {
@@ -2713,8 +2713,8 @@ function renderDispatch(){
         +(isRepair?"<div style='text-align:center;font-size:11px;color:#1E40AF;font-weight:700;background:#DBEAFE;border-radius:8px;padding:5px;'>🔧 ไม่พร้อมใช้งาน</div>":"")
         +"</div>";
     }).join("");
-    vehEl.querySelectorAll("[data-ret]").forEach(function(b){b.onclick=function(){openDispatchReturn(b.dataset.ret);};});
-    vehEl.querySelectorAll("[data-out]").forEach(function(b){b.onclick=function(){openDispatchOut(b.dataset.out);};});
+    vehEl.querySelectorAll("[data-ret]").forEach(function(b){var id=b.dataset.ret;b.onclick=function(){openDispatchReturn(id);};});
+    vehEl.querySelectorAll("[data-out]").forEach(function(b){var id=b.dataset.out;b.onclick=function(){openDispatchOut(id);};});
   }
 
   // ── กำลังออกงาน ──────────────────────────────────────────────────
@@ -2729,7 +2729,7 @@ function renderDispatch(){
         +(canManage?"<button type='button' class='bs' style='padding:8px 16px;font-size:12px;white-space:nowrap;' data-ret2='"+v.id+"'>✅ บันทึกกลับ</button>":"")
         +"</div>";
     }).join(""):"<div style='color:#CBD5E1;font-size:13px;padding:12px;'>ไม่มีรถออกงานอยู่ในขณะนี้</div>";
-    actEl.querySelectorAll("[data-ret2]").forEach(function(b){b.onclick=function(){openDispatchReturn(b.dataset.ret2);};});
+    actEl.querySelectorAll("[data-ret2]").forEach(function(b){var id=b.dataset.ret2;b.onclick=function(){openDispatchReturn(id);};});
   }
 
   // ── คนขับ ─────────────────────────────────────────────────────────
@@ -2841,7 +2841,7 @@ if(g("do-confirm"))g("do-confirm").onclick=function(){
   var vehObj=VEHICLES.filter(function(x){return x.id===vehId;})[0];
   if(vehObj){vehObj.status="out";vehObj.currentDriver=driver;vehObj.timeOut=timeOut;vehObj.outDate=todayStr();vehObj.currentProj=proj;vehObj.timeIn="";vehObj.returnBy="";}
   console.log('[DO-CONFIRM] VEHICLES status=out driver='+driver);
-  addTicker("✅ "+b.vehicleName+" ออกงานแล้ว — "+b.driver);
+  addTicker("🚛 "+veh.name+" ออกงาน — "+driver+(proj?" → "+proj:""));
   renderDispatch();
 }
 
