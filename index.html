@@ -244,7 +244,6 @@ button:active{transform:scale(.97);}
       <div id="dispatch-driver-status" style="display:none;"></div>
       <div id="dispatch-bookings" style="display:none;"></div>
       <div id="dispatch-requests-wrap" style="display:none;"></div>
-      <div id="btn-quick-book" style="display:none;"></div>
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
         <div>
           <div style="font-family:'Prompt',sans-serif;font-weight:800;font-size:16px;color:#1D4ED8;">🚛 เรียกใช้รถ</div>
@@ -2678,14 +2677,7 @@ function renderDispatch(){
   // ── bind ปุ่มใน dispatch tab ──────────────────────────────────────
   var dispHead = g("btn-dispatch-out");
   if(dispHead) dispHead.style.display = canManage ? "inline-flex" : "none";
-  var qbBtn = g("btn-quick-book");
-  if(qbBtn){
-    qbBtn.style.display = "inline-flex";
-    qbBtn.onclick = function(){openDispatchOut();};
-    // badge จำนวนการจองวันนี้
-    var todayBookCnt = TRIP_BOOKINGS.filter(function(b){return b.date===today&&b.status!=="rejected";}).length;
-    qbBtn.textContent = "📅 จองรถ"+(todayBookCnt>0?" ("+todayBookCnt+")":"");
-  }
+
 
   // ── การจองล่วงหน้า (รอ confirm) ──────────────────────────────────
   var pendingBooks = TRIP_BOOKINGS.filter(function(b){
