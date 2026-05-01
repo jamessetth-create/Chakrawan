@@ -292,7 +292,11 @@ button:active{transform:scale(.97);}
     <div id="tab-history" class="hidden">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
         <div style="font-family:'Prompt',sans-serif;font-weight:800;font-size:16px;color:#1D4ED8;">📊 ประวัติ</div>
-        <button type="button" id="btn-hist-back" class="bg" style="white-space:nowrap;padding:8px 12px;">📅 ดูย้อนหลัง</button>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="month" id="hist-month-filter" style="padding:7px 12px;border:1.5px solid #E2E8F0;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:13px;cursor:pointer;"/>
+          <button type="button" id="btn-export-pdf" class="bg" style="white-space:nowrap;padding:8px 14px;background:#EF4444;color:#fff;border:none;border-radius:8px;font-weight:700;">🖨️ Export PDF</button>
+          <button type="button" id="btn-hist-back" class="bg" style="white-space:nowrap;padding:8px 12px;">📅 ดูย้อนหลัง</button>
+        </div>
       </div>
       <div style="display:flex;gap:4px;margin-bottom:14px;background:#F1F5F9;border-radius:10px;padding:4px;">
         <button type="button" id="hist-sub-w" class="stab" style="background:#1D4ED8;color:#fff;">📦 การเบิก</button>
@@ -2219,7 +2223,98 @@ g("vlog-save").onclick=function(){
 };
 
 // ─── HISTORY ──────────────────────────────────────────────────────────
+// ── History Month Filter + PDF Export ────────────────────────────────
+var histMonthFilter = "";
+
+function initHistMonthFilter(){
+  var el = g("hist-month-filter");
+  if(!el) return;
+  // set default เป็นเดือนปัจจุบัน
+  var now = new Date();
+  var mm = String(now.getMonth()+1).padStart(2,'0');
+  el.value = now.getFullYear()+"-"+mm;
+  histMonthFilter = el.value;
+  el.onchange = function(){
+    histMonthFilter = el.value;
+    // re-render ทุก history tab
+    var active = document.querySelector("#hist-tabs .stab.on");
+    if(active) active.click();
+    else setHistSub("v");
+  };
+}
+
+function filterByMonth(arr, dateField){
+  if(!histMonthFilter) return arr;
+  var ym = histMonthFilter; // "2026-05"
+  return arr.filter(function(x){
+    var d = String(x[dateField]||x.date||x.createdAt||"");
+    return d.startsWith(ym);
+  });
+}
+
+function exportHistoryPDF(){
+  var month = histMonthFilter||"ทั้งหมด";
+  var title = "ประวัติการใช้รถ — "+month;
+
+  // รวม VEHICLE_HISTORY เดือนนั้น
+  var vhist = filterByMonth(VEHICLE_HISTORY||[], "date");
+  var wreqs = filterByMonth(WDS||[], "date");
+
+  var html = "<html><head><meta charset='UTF-8'/>"
+    +"<style>body{font-family:Sarabun,sans-serif;padding:24px;font-size:13px;}"
+    +"h1{font-size:20px;color:#1D4ED8;margin-bottom:4px;}"
+    +"h2{font-size:15px;color:#475569;margin:20px 0 8px;border-bottom:2px solid #E2E8F0;padding-bottom:4px;}"
+    +"table{width:100%;border-collapse:collapse;margin-bottom:16px;}"
+    +"th{background:#1D4ED8;color:#fff;padding:8px 10px;text-align:left;font-size:12px;}"
+    +"td{padding:7px 10px;border-bottom:1px solid #F1F5F9;font-size:12px;}"
+    +"tr:nth-child(even){background:#F8FAFC;}"
+    +".summary{display:flex;gap:16px;margin:12px 0;}"
+    +".summary-box{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 16px;text-align:center;}"
+    +".summary-num{font-size:24px;font-weight:bold;color:#1D4ED8;}"
+    +".summary-label{font-size:11px;color:#64748B;}"
+    +"</style></head><body>"
+    +"<h1>🏗️ จักรวาล BUILD STORE</h1>"
+    +"<div style='color:#64748B;font-size:12px;margin-bottom:16px;'>ออกรายงาน: "+new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})+" · เดือน: "+month+"</div>"
+
+    // Summary boxes
+    +"<div class='summary'>"
+    +"<div class='summary-box'><div class='summary-num'>"+vhist.length+"</div><div class='summary-label'>ครั้งที่วิ่ง</div></div>"
+    +"<div class='summary-box'><div class='summary-num'>"+([...new Set(vhist.map(function(x){return x.vehicleName;}))].length)+"</div><div class='summary-label'>รถที่ใช้</div></div>"
+    +"<div class='summary-box'><div class='summary-num'>"+([...new Set(vhist.map(function(x){return x.driver;}))].length)+"</div><div class='summary-label'>คนขับ</div></div>"
+    +"</div>"
+
+    // ตารางประวัติรถ
+    +"<h2>🚛 ประวัติการใช้รถ ("+vhist.length+" ครั้ง)</h2>"
+    +"<table><thead><tr><th>วันที่</th><th>รถ</th><th>คนขับ</th><th>ออก</th><th>กลับ</th><th>โครงการ</th><th>บันทึกกลับโดย</th></tr></thead><tbody>"
+    +vhist.map(function(h){
+      return "<tr><td>"+(h.date||"")+"</td><td>"+h.vehicleName+"</td><td>"+h.driver
+        +"</td><td>"+h.timeOut+"</td><td>"+(h.timeIn||"—")+"</td><td>"+(h.proj||"")+"</td><td>"+(h.returnBy||"")+"</td></tr>";
+    }).join("")
+    +"</tbody></table>";
+
+  // ตารางเบิกวัสดุ
+  if(wreqs.length){
+    html += "<h2>📦 ประวัติการเบิกวัสดุ ("+wreqs.length+" รายการ)</h2>"
+      +"<table><thead><tr><th>วันที่</th><th>ผู้เบิก</th><th>รายการ</th><th>จำนวน</th><th>โครงการ</th></tr></thead><tbody>"
+      +wreqs.map(function(w){
+        return "<tr><td>"+(w.date||"")+"</td><td>"+(w.reqName||"")+"</td><td>"+
+          (w.items?JSON.stringify(w.items):"")+"</td><td></td><td>"+(w.proj||"")+"</td></tr>";
+      }).join("")+"</tbody></table>";
+  }
+
+  html += "</body></html>";
+
+  var win = window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+  win.print();
+}
+
+
 function initHistTabs(){
+  initHistMonthFilter();
+  var pdfBtn=g("btn-export-pdf");
+  if(pdfBtn)pdfBtn.onclick=exportHistoryPDF;
   g("hist-sub-w").onclick=function(){setHistSub("w");};
   g("hist-sub-r").onclick=function(){setHistSub("r");};
   g("hist-sub-s").onclick=function(){setHistSub("s");};
@@ -2332,7 +2427,13 @@ function renderVehicleHistory(){
   var search=g("vh-search").value.toLowerCase(),vehF=g("vh-veh").value||"all";
   var vsel=g("vh-veh");
   if(vsel){vsel.innerHTML="<option value='all'>รถทั้งหมด</option>"+VEHICLES.map(function(v){return "<option value='"+v.id+"'>"+(v.name||"")+"</option>";}).join('');}
-  var list=VEHICLE_LOGS.filter(function(l){return sameYM(l.createdAt,histY,histM)&&(vehF==="all"||l.vehicleId===vehF)&&(l.vehicleName.toLowerCase().indexOf(search)>-1||l.driver.toLowerCase().indexOf(search)>-1);});
+  // ใช้ VEHICLE_HISTORY (Firebase real-time) แทน VEHICLE_LOGS
+  var histArr = (VEHICLE_HISTORY&&VEHICLE_HISTORY.length) ? VEHICLE_HISTORY : VEHICLE_LOGS;
+  var list=histArr.filter(function(l){
+    var dateMatch = histMonthFilter ? (l.date||l.createdAt||"").startsWith(histMonthFilter) : sameYM(l.createdAt||l.date,histY,histM);
+    return dateMatch && (vehF==="all"||l.vehicleId===vehF)
+      && ((l.vehicleName||"").toLowerCase().indexOf(search)>-1||(l.driver||"").toLowerCase().indexOf(search)>-1);
+  });
   list=list.slice().sort(function(a,b){return new Date(b.createdAt).getTime()-new Date(a.createdAt).getTime();});
   var sumEl=g("vh-sum");
   if(list.length){sumEl.innerHTML="<div style='font-size:11px;font-weight:700;color:#5B21B6;margin-bottom:6px;'>สรุปการใช้รถ "+MFull[histM]+" "+(histY+543)+"</div><span style='font-size:13px;'>รวม <strong style='color:#7C3AED;'>"+list.length+"</strong> รายการ</span>";show("vh-sum");}else hide("vh-sum");
@@ -3019,7 +3120,7 @@ if(g("do-confirm"))g("do-confirm").onclick=function(){
 if(g("dr-cancel"))g("dr-cancel").onclick=function(){closeMod("mod-dispatch-return");};
 if(g("dr-confirm"))g("dr-confirm").onclick=function(){
   var drBtn=g("dr-confirm"); if(drBtn.disabled) return; drBtn.disabled=true;
-  setTimeout(function(){if(drBtn)drBtn.disabled=false;},3000);
+  drBtn.textContent="⏳ กำลังบันทึก...";
   var timeIn=g("dr-time-in").value, note=g("dr-note").value.trim();
   if(!timeIn){alert("กรุณาระบุเวลากลับ");return;}
   var l=VEHICLE_LOGS.filter(function(x){return x.id===dispatchReturnId;})[0];
@@ -3035,6 +3136,8 @@ if(g("dr-confirm"))g("dr-confirm").onclick=function(){
   // update VEHICLES กลับเป็น available
   var vId = l.vehicleId || dispatchReturnVehId;
   var vehReturn = {id:vId, status:"available", timeIn:timeIn, returnBy:me.name, updatedAt:new Date().toISOString()};
+  fbUpdate("VEHICLES", vId, {status:"available",currentDriver:"",timeOut:"",outDate:"",currentProj:"",updatedAt:new Date().toISOString()});
+  closeMod("mod-dispatch-return");
   apiUpdate("VEHICLES", vId, vehReturn);
   // บันทึกประวัติใน VEHICLE_HISTORY (append only)
   var hist = {
