@@ -2060,8 +2060,8 @@ function renderVehicles(){
     fr.appendChild(b);
   });
 
-  var el=g("vh-body");if(!el){console.error("vh-body not found");return;}
-  console.log("[renderVehicles] VEHICLES:",VEHICLES.length,"filter:",vehicleFilter);
+  var el=g("vehicle-list")||g("vh-body");if(!el){console.error("[renderVehicles] no container");return;}
+  console.log("[renderVehicles] el:"+el.id+" VEHICLES:"+VEHICLES.length);
   var list=VEHICLES.filter(function(v){
     if(vehicleFilter==="all") return true;
     if(vehicleFilter==="ok") return v.status==="ok"||v.status==="available"||v.status==="out";
