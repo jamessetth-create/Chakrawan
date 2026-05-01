@@ -1173,7 +1173,7 @@ var CC=[["#FEF3C7","#92400E"],["#DBEAFE","#1E40AF"],["#DCFCE7","#166534"],["#FEE
 var IST={ok:{label:"ปกติ",c:"#166534",bg:"#DCFCE7",bd:"#86EFAC",icon:"✅"},repair:{label:"กำลังซ่อม",c:"#92400E",bg:"#FEF3C7",bd:"#FDE68A",icon:"🔧"}};
 var RRST={pending:{bg:"#EDE9FE",bd:"#C4B5FD",c:"#5B21B6",t:"⏳ รอตรวจ"},verified_repair:{bg:"#FEF3C7",bd:"#FDE68A",c:"#92400E",t:"🔧 กำลังซ่อม"},done:{bg:"#DCFCE7",bd:"#86EFAC",c:"#166534",t:"✅ ซ่อมเสร็จ"},rejected:{bg:"#F1F5F9",bd:"#CBD5E1",c:"#475569",t:"✔ ปกติดี"}};
 var RRPRI={low:{c:"#059669",t:"🟢 ปกติ",o:3},medium:{c:"#D97706",t:"🟡 เร่งด่วน",o:2},high:{c:"#DC2626",t:"🔴 ด่วนมาก",o:1}};
-var VST={ok:{label:"ปกติ",c:"#166534",bg:"#DCFCE7",bd:"#86EFAC",icon:"✅",dot:"#059669"},caution:{label:"ควรระวัง",c:"#92400E",bg:"#FEF3C7",bd:"#FDE68A",icon:"⚠️",dot:"#D97706"},repair:{label:"กำลังซ่อม",c:"#1E40AF",bg:"#DBEAFE",bd:"#93C5FD",icon:"🔧",dot:"#2563EB"},broken:{label:"ใช้ไม่ได้",c:"#991B1B",bg:"#FEE2E2",bd:"#FCA5A5",icon:"❌",dot:"#DC2626"}};
+var VST={available:{label:"ปกติ",c:"#166534",bg:"#DCFCE7",bd:"#86EFAC",icon:"✅",dot:"#059669",color:"#166534"},out:{label:"ออกงาน",c:"#DC2626",bg:"#FEE2E2",bd:"#FECACA",icon:"🔴",dot:"#DC2626",color:"#DC2626"},ok:{label:"ปกติ",c:"#166534",bg:"#DCFCE7",bd:"#86EFAC",icon:"✅",dot:"#059669"},caution:{label:"ควรระวัง",c:"#92400E",bg:"#FEF3C7",bd:"#FDE68A",icon:"⚠️",dot:"#D97706"},repair:{label:"กำลังซ่อม",c:"#1E40AF",bg:"#DBEAFE",bd:"#93C5FD",icon:"🔧",dot:"#2563EB"},broken:{label:"ใช้ไม่ได้",c:"#991B1B",bg:"#FEE2E2",bd:"#FCA5A5",icon:"❌",dot:"#DC2626"}};
 var MFull=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
 var MTH=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 var LOW=5;
@@ -1839,6 +1839,7 @@ function buildRrSels(){
   }).join('');
   var vsel=g("rr-veh-sel");if(vsel)vsel.innerHTML="<option value=''>-- เลือกรถ/เครื่องจักร --</option>"+VEHICLES.map(function(v){
     var st=VST[v.status]||VST.ok;
+  var isOut=v.status==="out";
     var isBeingRepaired=REPAIRS.some(function(r){return r.itemId===v.id&&(r.status==="pending"||r.status==="verified_repair");});
     return "<option value='"+v.id+"'"+(isBeingRepaired?" disabled":"")+">"
       +st.icon+" "+v.name+(v.plate?" ["+v.plate+"]":"")+(isBeingRepaired?" (กำลังซ่อมอยู่)":"")+"</option>";
@@ -2062,6 +2063,7 @@ function renderVehicles(){
   var el=g("vh-body");if(!el)return;
   var list=VEHICLES.filter(function(v){
     if(vehicleFilter==="all") return true;
+    if(vehicleFilter==="ok") return v.status==="ok"||v.status==="available"||v.status==="out";
     return v.status===vehicleFilter;
   });
 
@@ -2194,6 +2196,7 @@ g("v-save").onclick=function(){
 function openVehicleDetail(id){
   viewVehicleId=id;var v=VEHICLES.filter(function(x){return x.id===id;})[0];if(!v)return;
   var st=VST[v.status]||VST.ok;
+  var isOut=v.status==="out";
   g("vd-header").innerHTML="<div style='display:flex;align-items:center;gap:12px;'>"
     +"<div style='width:42px;height:42px;background:"+st.bg+";border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;border:1px solid "+st.bd+";'>"+st.icon+"</div>"
     +"<div style='flex:1;'><div style='font-weight:800;font-size:16px;color:#1E293B;'>"+v.name+"</div>"
@@ -2727,25 +2730,45 @@ function renderDispatch(){
   var vehCount=g("dispatch-veh-count");
   if(vehEl){
     if(vehCount) vehCount.textContent=VEHICLES.length+" คัน";
-    vehEl.innerHTML=VEHICLES.map(function(v){
-      var isOut=v.status==="out",isRepair=v.status==="repair"||v.status==="broken";
-      var bg=isRepair?"#EFF6FF":isOut?"#FEF2F2":"#F0FDF4";
-      var bd=isRepair?"#BFDBFE":isOut?"#FECACA":"#BBF7D0";
-      var dot=isRepair?"#2563EB":isOut?"#DC2626":"#16A34A";
-      var stxt=isRepair?"🔧 กำลังซ่อม":isOut?"🔴 "+(v.currentDriver||"")+(v.currentProj?" → "+v.currentProj:""):"🟢 ว่าง พร้อมใช้งาน";
-      return "<div style='background:"+bg+";border:1.5px solid "+bd+";border-radius:14px;padding:14px;'>"
-        +"<div style='display:flex;align-items:center;gap:8px;margin-bottom:8px;'>"
-        +"<div style='width:10px;height:10px;border-radius:50%;background:"+dot+";flex-shrink:0;box-shadow:0 0 6px "+dot+"55;'></div>"
-        +"<b style='flex:1;font-size:14px;'>"+v.name+"</b>"
-        +(v.plate?"<span style='font-size:10px;color:#1D4ED8;background:#DBEAFE;padding:2px 8px;border-radius:10px;font-weight:700;'>"+v.plate+"</span>":"")
+    // แบ่งกลุ่มตาม type
+    var vehGroups={};
+    VEHICLES.forEach(function(v){
+      var cat=v.type||"ไม่ระบุประเภท";
+      if(!vehGroups[cat]) vehGroups[cat]=[];
+      vehGroups[cat].push(v);
+    });
+    var vehHtml="";
+    Object.keys(vehGroups).sort().forEach(function(cat){
+      var vehs=vehGroups[cat];
+      vehHtml+="<div style='margin-bottom:20px;'>"
+        +"<div style='font-family:Prompt,sans-serif;font-weight:700;font-size:13px;color:#1D4ED8;"
+        +"padding:8px 14px;background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px;"
+        +"margin-bottom:10px;display:flex;align-items:center;gap:8px;'>"
+        +"🚛 "+cat
+        +"<span style='font-size:11px;font-weight:600;color:#64748B;background:#fff;padding:1px 8px;border-radius:8px;'>"+vehs.length+" คัน</span>"
         +"</div>"
-        +(v.type?"<div style='font-size:11px;color:#94A3B8;margin-bottom:4px;'>"+v.type+"</div>":"")
-        +"<div style='font-size:12px;color:#475569;margin-bottom:10px;font-weight:600;'>"+stxt+"</div>"
-        +(isOut&&canManage?"<button type='button' class='bs' style='width:100%;padding:7px;font-size:12px;' data-ret='"+v.id+"'>✅ บันทึกเวลากลับ</button>":"")
-        +(!isOut&&!isRepair&&canManage?"<button type='button' class='bp2' style='width:100%;padding:7px;font-size:12px;' data-out='"+v.id+"'>🚛 ส่งออกงาน</button>":"")
-        +(isRepair?"<div style='text-align:center;font-size:11px;color:#1E40AF;font-weight:700;background:#DBEAFE;border-radius:8px;padding:5px;'>🔧 ไม่พร้อมใช้งาน</div>":"")
-        +"</div>";
-    }).join("");
+        +"<div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;'>"
+        +vehs.map(function(v){
+          var isOut=v.status==="out",isRepair=v.status==="repair"||v.status==="broken";
+          var bg=isRepair?"#EFF6FF":isOut?"#FEF2F2":"#F0FDF4";
+          var bd=isRepair?"#BFDBFE":isOut?"#FECACA":"#BBF7D0";
+          var dot=isRepair?"#2563EB":isOut?"#DC2626":"#16A34A";
+          var stxt=isRepair?"🔧 กำลังซ่อม":isOut?"🔴 "+(v.currentDriver||"")+(v.currentProj?" → "+v.currentProj:""):"🟢 ว่าง";
+          return "<div style='background:"+bg+";border:1.5px solid "+bd+";border-radius:12px;padding:12px;'>"
+            +"<div style='display:flex;align-items:center;gap:6px;margin-bottom:6px;'>"
+            +"<div style='width:9px;height:9px;border-radius:50%;background:"+dot+";flex-shrink:0;'></div>"
+            +"<b style='flex:1;font-size:13px;'>"+v.name+"</b>"
+            +(v.plate?"<span style='font-size:10px;color:#1D4ED8;background:#DBEAFE;padding:2px 6px;border-radius:8px;font-weight:700;'>"+v.plate+"</span>":"")
+            +"</div>"
+            +"<div style='font-size:11px;color:#475569;margin-bottom:8px;font-weight:600;'>"+stxt+"</div>"
+            +(isOut&&canManage?"<button type='button' class='bs' style='width:100%;padding:6px;font-size:11px;' data-ret='"+v.id+"'>✅ บันทึกกลับ</button>":"")
+            +(!isOut&&!isRepair&&canManage?"<button type='button' class='bp2' style='width:100%;padding:6px;font-size:11px;' data-out='"+v.id+"'>🚛 ส่งออกงาน</button>":"")
+            +(isRepair?"<div style='text-align:center;font-size:11px;color:#1E40AF;font-weight:700;background:#DBEAFE;border-radius:6px;padding:4px;'>🔧 ไม่พร้อม</div>":"")
+            +"</div>";
+        }).join("")
+        +"</div></div>";
+    });
+    vehEl.innerHTML=vehHtml;
     vehEl.querySelectorAll("[data-ret]").forEach(function(b){var id=b.dataset.ret;b.onclick=function(){openDispatchReturn(id);};});
     vehEl.querySelectorAll("[data-out]").forEach(function(b){var id=b.dataset.out;b.onclick=function(){openDispatchOut(id);};});
   }
@@ -2815,6 +2838,7 @@ function openDispatchOut(vehicleId){
   if(vsel){
     vsel.innerHTML="<option value=''>-- เลือกรถ --</option>"+VEHICLES.map(function(v){
       var st=VST[v.status]||VST.ok;
+  var isOut=v.status==="out";
       var isRepair=v.status==="repair"||v.status==="broken";
       var isOut=VEHICLE_LOGS.filter(function(l){return l.vehicleId===v.id&&l.date===todayStr()&&!l.timeIn;}).length>0;
       if(isRepair||isOut) return "<option value='"+v.id+"' disabled style='color:#94A3B8;'>"
