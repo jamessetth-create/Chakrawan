@@ -875,7 +875,7 @@ try{
 // ══════════════════════════════════════════════════════════════
 // API CONFIG — ใส่ URL ของ Google Apps Script ที่นี่
 // ══════════════════════════════════════════════════════════════
-var API_URL = 'https://script.google.com/macros/s/AKfycbyTurmMtX45KXkrmEwFGCNPjBc3nfgCpihKENDGo9J3TpHMpcjN4kyZ-OaSEIFlyuzjPQ/exec'; // ← วาง Web App URL ตรงนี้ เช่น https://script.google.com/macros/s/xxx/exec
+var API_URL = 'https://script.google.com/macros/s/AKfycby9g6Hf9hSJFrgH60MOFiaTcg3g9oikUGv4sMevfPJLUD9eYnF4dFozME9iqyt5Q_sBHQ/exec'; // ← วาง Web App URL ตรงนี้ เช่น https://script.google.com/macros/s/xxx/exec
 var USE_API = !!API_URL; // true = ใช้ Sheets, false = ใช้ memory (demo mode)
 var apiQueue = [], apiBusy = false;
 
@@ -2807,6 +2807,77 @@ function openDispatchOut(vehicleId){
   g("do-note").value="";
   openMod("mod-dispatch-out");
 }
+function confirmDispatchOut(){
+  var vehId=g("do-veh")?g("do-veh").value:"";
+  var ds=g("do-drv-sel")?g("do-drv-sel").value:"";
+  var driver=ds==="__other__"?(g("do-drv-other")?g("do-drv-other").value.trim():""):ds;
+  var date=g("do-date")?g("do-date").value:todayStr();
+  var timeOut=g("do-time")?g("do-time").value:"";
+  var ps=g("do-proj-sel")?g("do-proj-sel").value:"";
+  var proj=ps==="__other__"?(g("do-proj-other")?g("do-proj-other").value.trim():""):ps;
+  var note=g("do-note")?g("do-note").value.trim():"";
+  var err=g("do-err");
+  if(!vehId){if(err){err.textContent="⚠️ กรุณาเลือกรถ";err.style.display="block";}return;}
+  if(!driver){if(err){err.textContent="⚠️ กรุณาระบุคนขับ";err.style.display="block";}return;}
+  if(!timeOut){if(err){err.textContent="⚠️ กรุณาระบุเวลาออก";err.style.display="block";}return;}
+  var veh=VEHICLES.filter(function(v){return v.id===vehId;})[0];if(!veh)return;
+  veh.status="out";veh.currentDriver=driver;veh.timeOut=timeOut;veh.outDate=date;veh.currentProj=proj;veh.updatedAt=new Date().toISOString();
+  apiCall("update","VEHICLES",{id:vehId,status:"out",currentDriver:driver,timeOut:timeOut,outDate:date,currentProj:proj,updatedAt:veh.updatedAt},vehId,function(e,res){
+    console.log("[dispatch-out]",res&&res.ok,res&&res.error||"");
+  });
+  addTicker("🚛 "+veh.name+" ออกงาน — "+driver+(proj?" → "+proj:""));
+  closeSimpleModal();renderDispatch();buildTabs();
+}
+
+function openDispatchReturn(vehicleId){
+  var veh=VEHICLES.filter(function(v){return v.id===vehicleId;})[0];if(!veh)return;
+  showSimpleModal("✅ บันทึกเวลากลับ",
+    "<div style='background:#F0FDF4;border:1px solid #86EFAC;border-radius:10px;padding:10px 14px;margin-bottom:14px;'>"
+    +"<b style='color:#166534;font-size:14px;'>🚛 "+veh.name+"</b>"
+    +"<div style='font-size:12px;color:#475569;margin-top:4px;'>👤 "+(veh.currentDriver||"-")+(veh.timeOut?" · ⏰ ออก "+veh.timeOut:"")+(veh.currentProj?" · 📍 "+veh.currentProj:"")+"</div></div>"
+    +"<div><label class='lbl'>เวลากลับ *</label><input id='ret-time' type='time' value='"+nowTimeStr()+"'/></div>"
+    +"<div class='mt'><label class='lbl'>หมายเหตุ</label><textarea id='ret-note' rows='2'></textarea></div>",
+    function(){confirmDispatchReturn(vehicleId);},"✅ บันทึกกลับ");
+}
+
+function confirmDispatchReturn(vehicleId){
+  var timeIn=g("ret-time")?g("ret-time").value:"";
+  var note=g("ret-note")?g("ret-note").value.trim():"";
+  if(!timeIn){alert("กรุณาระบุเวลากลับ");return;}
+  var veh=VEHICLES.filter(function(v){return v.id===vehicleId;})[0];if(!veh)return;
+  var hist={id:uid(),vehicleId:veh.id,vehicleName:veh.name,
+    driver:veh.currentDriver||"",date:veh.outDate||todayStr(),
+    timeOut:veh.timeOut||"",timeIn:timeIn,
+    proj:veh.currentProj||"",note:note,
+    logBy:veh.currentDriver||"",returnBy:me.name};
+  VEHICLE_HISTORY.unshift(hist);
+  apiSave("VEHICLE_HISTORY",hist);
+  veh.status="available";veh.currentDriver="";veh.timeOut="";veh.currentProj="";veh.outDate="";veh.updatedAt=new Date().toISOString();
+  apiCall("update","VEHICLES",{id:veh.id,status:"available",currentDriver:"",timeOut:"",outDate:"",currentProj:"",updatedAt:veh.updatedAt},veh.id,function(e,res){
+    console.log("[dispatch-return] VEHICLES updated:",res&&res.ok);
+  });
+  addTicker("✅ "+veh.name+" กลับแล้ว — "+hist.driver+" เวลา "+timeIn);
+  closeSimpleModal();renderDispatch();buildTabs();
+}
+
+var _sModal=null;
+function showSimpleModal(title,body,onOk,okLabel){
+  if(!_sModal){_sModal=document.createElement("div");_sModal.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;z-index:1000;";document.body.appendChild(_sModal);}
+  _sModal.innerHTML="<div class='modal' style='width:440px;max-height:90vh;overflow-y:auto;' onclick='event.stopPropagation()'>"
+    +"<div style='font-family:Prompt,sans-serif;font-weight:800;font-size:16px;color:#1E293B;margin-bottom:16px;'>"+title+"</div>"
+    +body
+    +"<div style='display:flex;gap:10px;justify-content:flex-end;margin-top:18px;'>"
+    +"<button type='button' class='bg' id='_sm_c' style='padding:10px 18px;'>ยกเลิก</button>"
+    +"<button type='button' class='bp2' id='_sm_ok' style='padding:10px 18px;'>"+(okLabel||"ยืนยัน")+"</button>"
+    +"</div></div>";
+  _sModal.style.display="flex";
+  _sModal.onclick=function(e){if(e.target===_sModal)closeSimpleModal();};
+  var ok=document.getElementById("_sm_ok");if(ok)ok.onclick=onOk;
+  var cc=document.getElementById("_sm_c");if(cc)cc.onclick=closeSimpleModal;
+}
+function closeSimpleModal(){if(_sModal)_sModal.style.display="none";}
+
+
 if(g("btn-dispatch-out"))g("btn-dispatch-out").onclick=function(){openDispatchOut("");};
 if(g("do-cancel"))g("do-cancel").onclick=function(){closeMod("mod-dispatch-out");};
 if(g("do-confirm"))g("do-confirm").onclick=function(){
