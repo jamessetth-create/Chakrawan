@@ -214,8 +214,8 @@ button:active{transform:scale(.97);}
       </div>
       <!-- Vehicles sub tabs -->
       <div style="display:flex;gap:4px;margin-bottom:12px;background:#F1F5F9;border-radius:10px;padding:4px;">
-        <button type="button" id="vsub-vehicles" class="stab" style="background:#1D4ED8;color:#fff;">🚛 รถ/เครื่องจักร</button>
-        <button type="button" id="vsub-drivers"  class="stab" style="background:transparent;color:#64748B;">👤 คนขับ</button>
+        <button type="button" id="vsub-vehicles" class="stab" style="background:#1D4ED8;color:#fff;" onclick="setVehSubTab('vehicles')">🚛 รถ/เครื่องจักร</button>
+        <button type="button" id="vsub-drivers" class="stab" style="background:transparent;color:#64748B;" onclick="setVehSubTab('drivers')">👤 คนขับ</button>
       </div>
       <div id="veh-pane-vehicles">
         <div id="vehicle-filter-row" style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;"></div>
@@ -1359,6 +1359,9 @@ function loginAs(u){
     console.log('[loginAs] verify localStorage:', check?'OK':'FAILED');
   }catch(e){ console.error('[loginAs] localStorage error:', e); }
   hide("pg-login");show("pg-app");
+  // bind sub-tab buttons
+  if(g("vsub-vehicles"))g("vsub-vehicles").onclick=function(){setVehSubTab("vehicles");};
+  if(g("vsub-drivers"))g("vsub-drivers").onclick=function(){setVehSubTab("drivers");};
   g("hdr-name").textContent=u.name;
   g("hdr-role").innerHTML="<span class='tag' style='background:"+ROLE[u.role].color+"25;color:"+ROLE[u.role].color+";font-size:10px;'>"+ROLE[u.role].icon+" "+ROLE[u.role].label+"</span>";
   g("app-approver").value=u.name;g("req-date").value=todayStr();
