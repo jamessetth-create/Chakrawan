@@ -2060,7 +2060,8 @@ function renderVehicles(){
     fr.appendChild(b);
   });
 
-  var el=g("vh-body");if(!el)return;
+  var el=g("vh-body");if(!el){console.error("vh-body not found");return;}
+  console.log("[renderVehicles] VEHICLES:",VEHICLES.length,"filter:",vehicleFilter);
   var list=VEHICLES.filter(function(v){
     if(vehicleFilter==="all") return true;
     if(vehicleFilter==="ok") return v.status==="ok"||v.status==="available"||v.status==="out";
@@ -2101,6 +2102,7 @@ function renderVehicles(){
 }
 
 function vehicleCard(v,canEdit){
+  try{
   var st=VST[v.status]||VST.ok;
   var isOut=v.status==="out";
   return "<div class='card' style='padding:0;overflow:hidden;border:1.5px solid #E2E8F0;'>"
@@ -2122,7 +2124,8 @@ function vehicleCard(v,canEdit){
       +"<button type='button' class='bd' style='padding:5px 8px;font-size:11px;' data-vdel='"+v.id+"'>🗑️</button>"
       +"</div>":"")
     +"</div></div>";
-}
+
+  }catch(e){console.error("[vehicleCard] error:",v.name,e.message);return "";}}
 
 
 function buildVehicleDriverSel(){
