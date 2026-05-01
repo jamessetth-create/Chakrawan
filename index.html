@@ -2681,7 +2681,7 @@ function renderDispatch(){
   var qbBtn = g("btn-quick-book");
   if(qbBtn){
     qbBtn.style.display = "inline-flex";
-    qbBtn.onclick = function(){toggleBookingPanel();};
+    qbBtn.onclick = function(){openDispatchOut();};
     // badge จำนวนการจองวันนี้
     var todayBookCnt = TRIP_BOOKINGS.filter(function(b){return b.date===today&&b.status!=="rejected";}).length;
     qbBtn.textContent = "📅 จองรถ"+(todayBookCnt>0?" ("+todayBookCnt+")":"");
