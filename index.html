@@ -3052,6 +3052,9 @@ function confirmDispatchOut(){
   if(!timeOut){if(err){err.textContent="⚠️ กรุณาระบุเวลาออก";err.style.display="block";}return;}
   var veh=VEHICLES.filter(function(v){return v.id===vehId;})[0];if(!veh)return;
   veh.status="out";veh.currentDriver=driver;veh.timeOut=timeOut;veh.outDate=date;veh.currentProj=proj;veh.updatedAt=new Date().toISOString();
+  // update Firebase ทันที (real-time)
+  fbUpdate("VEHICLES", vehId, {status:"out",currentDriver:driver,timeOut:timeOut,outDate:date,currentProj:proj,updatedAt:veh.updatedAt});
+  // update Sheets (backup)
   apiCall("update","VEHICLES",{id:vehId,status:"out",currentDriver:driver,timeOut:timeOut,outDate:date,currentProj:proj,updatedAt:veh.updatedAt},vehId,function(e,res){
     console.log("[dispatch-out]",res&&res.ok,res&&res.error||"");
   });
@@ -3083,6 +3086,9 @@ function confirmDispatchReturn(vehicleId){
   VEHICLE_HISTORY.unshift(hist);
   apiSave("VEHICLE_HISTORY",hist);
   veh.status="available";veh.currentDriver="";veh.timeOut="";veh.currentProj="";veh.outDate="";veh.updatedAt=new Date().toISOString();
+  // update Firebase ทันที (real-time)
+  fbUpdate("VEHICLES", veh.id, {status:"available",currentDriver:"",timeOut:"",outDate:"",currentProj:"",updatedAt:veh.updatedAt});
+  // update Sheets (backup)
   apiCall("update","VEHICLES",{id:veh.id,status:"available",currentDriver:"",timeOut:"",outDate:"",currentProj:"",updatedAt:veh.updatedAt},veh.id,function(e,res){
     console.log("[dispatch-return] VEHICLES updated:",res&&res.ok);
   });
