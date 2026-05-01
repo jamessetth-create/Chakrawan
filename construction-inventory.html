@@ -2,6 +2,12 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8"/>
+  <link rel="manifest" href="manifest.json"/>
+  <meta name="theme-color" content="#1D4ED8"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="จักรวาล"/>
+  <link rel="apple-touch-icon" href="icon-192.png"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>จักรวาล — BUILD STORE</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Prompt:wght@700;800&family=Oswald:wght@600;700&display=swap" rel="stylesheet"/>
@@ -46,6 +52,9 @@ button:active{transform:scale(.97);}
 .hidden{display:none!important;}
 .mt{margin-top:14px;}
 </style>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
 <body>
 
@@ -876,6 +885,76 @@ try{
 // API CONFIG — ใส่ URL ของ Google Apps Script ที่นี่
 // ══════════════════════════════════════════════════════════════
 var API_URL = 'https://script.google.com/macros/s/AKfycby9g6Hf9hSJFrgH60MOFiaTcg3g9oikUGv4sMevfPJLUD9eYnF4dFozME9iqyt5Q_sBHQ/exec'; // ← วาง Web App URL ตรงนี้ เช่น https://script.google.com/macros/s/xxx/exec
+// ── Firebase Config ──────────────────────────────────────────────────
+var FB_CONFIG = {
+  apiKey: "AIzaSyD9ii1TyiwqEKiuNrKfMGKjYOSdd2i2_Tw",
+  authDomain: "chakrawan-9cadc.firebaseapp.com",
+  databaseURL: "https://chakrawan-9cadc-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "chakrawan-9cadc",
+  storageBucket: "chakrawan-9cadc.firebasestorage.app",
+  messagingSenderId: "1834196657",
+  appId: "1:1834196657:web:97b48809dff913c2968c90"
+};
+var fbApp = null, fbDb = null, USE_FIREBASE = false;
+try {
+  fbApp = firebase.initializeApp(FB_CONFIG);
+  fbDb  = firebase.database();
+  USE_FIREBASE = true;
+  console.log('[Firebase] initialized ✅');
+} catch(e) {
+  console.warn('[Firebase] init failed:', e.message);
+}
+
+// ── Firebase helpers ──────────────────────────────────────────────────
+function fbRef(path){ return fbDb ? fbDb.ref(path) : null; }
+
+// fbSave: เขียน node ใหม่ใน Firebase
+function fbSave(sheet, obj){
+  if(!USE_FIREBASE||!fbDb) return;
+  var ref = fbDb.ref(sheet+'/'+obj.id);
+  ref.set(obj).then(function(){
+    console.log('[FB] saved', sheet, obj.id);
+  }).catch(function(e){ console.error('[FB] save error:', e.message); });
+}
+
+// fbUpdate: update fields ใน Firebase
+function fbUpdate(sheet, id, data){
+  if(!USE_FIREBASE||!fbDb) return;
+  var ref = fbDb.ref(sheet+'/'+id);
+  ref.update(data).then(function(){
+    console.log('[FB] updated', sheet, id);
+  }).catch(function(e){ console.error('[FB] update error:', e.message); });
+}
+
+// fbDelete: ลบ node
+function fbDelete(sheet, id){
+  if(!USE_FIREBASE||!fbDb) return;
+  fbDb.ref(sheet+'/'+id).remove();
+}
+
+// fbListen: real-time listener — เรียกครั้งเดียว จัดการ sync อัตโนมัติ
+function fbListen(sheet, localArr, onUpdate){
+  if(!USE_FIREBASE||!fbDb) return;
+  fbDb.ref(sheet).on('value', function(snapshot){
+    var data = snapshot.val() || {};
+    var arr = Object.values(data).filter(function(x){ return x && x.id; });
+    localArr.length = 0;
+    arr.forEach(function(x){ localArr.push(x); });
+    console.log('[FB] '+sheet+' updated: '+localArr.length+' records');
+    if(onUpdate) onUpdate();
+  });
+}
+
+// fbLoadOnce: โหลดครั้งเดียว (สำหรับ initial load)
+function fbLoadOnce(sheet, cb){
+  if(!USE_FIREBASE||!fbDb){ cb([]); return; }
+  fbDb.ref(sheet).once('value', function(snapshot){
+    var data = snapshot.val() || {};
+    var arr = Object.values(data).filter(function(x){ return x && x.id; });
+    cb(arr);
+  });
+}
+
 var USE_API = !!API_URL; // true = ใช้ Sheets, false = ใช้ memory (demo mode)
 var apiQueue = [], apiBusy = false;
 
@@ -950,7 +1029,12 @@ function apiCall(action, sheet, data, id, cb) {
   }
 }
 
-function apiSave(sheet, obj, cb)        { apiCall('save',   sheet, obj,  null, cb); }
+function apiSave(sheet, obj, cb){
+  // บันทึกลง Firebase (real-time)
+  fbSave(sheet, obj);
+  // บันทึกลง Sheets (backup)
+  apiCall('save', sheet, obj, null, cb);
+}
 
 // ── Upload รูปไป Google Drive ────────────────────────────────────────
 function uploadImageToDrive(base64DataUrl, filename, cb) {
@@ -988,7 +1072,10 @@ function uploadImageToDrive(base64DataUrl, filename, cb) {
     if(cb) cb(null, base64DataUrl);
   }
 }
-function apiUpdate(sheet, id, obj, cb)  { apiCall('update', sheet, obj,  id,   cb); }
+function apiUpdate(sheet, id, obj, cb){
+  fbUpdate(sheet, id, obj);
+  apiCall('update', sheet, obj, id, cb);
+}
 function apiDelete(sheet, id, cb)       { apiCall('delete', sheet, null, id,   cb); }
 
 // ── Load all data from Sheets ─────────────────────────────────
@@ -1362,6 +1449,8 @@ function loginAs(u){
   // bind sub-tab buttons
   if(g("vsub-vehicles"))g("vsub-vehicles").onclick=function(){setVehSubTab("vehicles");};
   if(g("vsub-drivers"))g("vsub-drivers").onclick=function(){setVehSubTab("drivers");};
+  // ── Firebase real-time listeners ─────────────────────────────────
+  startFirebaseListeners();
   g("hdr-name").textContent=u.name;
   g("hdr-role").innerHTML="<span class='tag' style='background:"+ROLE[u.role].color+"25;color:"+ROLE[u.role].color+";font-size:10px;'>"+ROLE[u.role].icon+" "+ROLE[u.role].label+"</span>";
   g("app-approver").value=u.name;g("req-date").value=todayStr();
@@ -2725,6 +2814,84 @@ if(g("drv-edit-save"))g("drv-edit-save").onclick=function(){
 // ─── DISPATCH (เรียกใช้รถ) ────────────────────────────────────────
 var dispatchReturnId = null;
 
+// ── Firebase Real-time Listeners ─────────────────────────────────────
+var _fbListenersStarted = false;
+function startFirebaseListeners(){
+  if(_fbListenersStarted || !USE_FIREBASE) return;
+  _fbListenersStarted = true;
+  console.log('[FB] Starting real-time listeners...');
+
+  // VEHICLES — สำคัญมาก real-time
+  fbListen('VEHICLES', VEHICLES, function(){
+    VEHICLES.forEach(function(v){
+      if(!v.status||v.status==='ok') v.status='available';
+      if(!v.noteImgs) v.noteImgs=[];
+    });
+    renderDispatch();
+    renderVehicles();
+    buildTabs();
+  });
+
+  // VEHICLE_HISTORY — ประวัติ
+  fbListen('VEHICLE_HISTORY', VEHICLE_HISTORY, function(){
+    renderDispatch();
+  });
+
+  // REQS — คำขอเบิก
+  fbListen('REQS', REQS, function(){
+    renderReqList();
+    buildTabs();
+  });
+
+  // ITEMS — สินค้า/วัสดุ
+  fbListen('ITEMS', ITEMS, function(){
+    renderStock();
+  });
+
+  // REPAIRS — แจ้งซ่อม
+  fbListen('REPAIRS', REPAIRS, function(){
+    renderRepairList();
+    buildTabs();
+  });
+
+  // NOTIFS — การแจ้งเตือน
+  fbListen('NOTIFS', NOTIFS, function(){
+    updateBell();
+  });
+
+  console.log('[FB] All listeners active ✅');
+}
+
+// ── Migrate Sheets data → Firebase (รันครั้งเดียว) ──────────────────
+function migrateToFirebase(){
+  if(!USE_FIREBASE){alert("Firebase ไม่ได้เชื่อมต่อ");return;}
+  var sheets = [
+    {name:'USERS', data:USERS},
+    {name:'ITEMS', data:ITEMS},
+    {name:'VEHICLES', data:VEHICLES},
+    {name:'DRIVERS', data:DRIVERS},
+    {name:'PROJECTS', data:PROJECTS},
+    {name:'REQS', data:REQS},
+    {name:'REPAIRS', data:REPAIRS},
+    {name:'NOTIFS', data:NOTIFS},
+    {name:'VEHICLE_HISTORY', data:VEHICLE_HISTORY},
+    {name:'STOCK_IN', data:STOCK_IN},
+  ];
+  var total = 0;
+  sheets.forEach(function(s){
+    s.data.forEach(function(obj){
+      if(obj && obj.id){
+        fbDb.ref(s.name+'/'+obj.id).set(obj);
+        total++;
+      }
+    });
+    console.log('[Migrate] '+s.name+': '+s.data.length+' records');
+  });
+  console.log('[Migrate] Done! Total: '+total+' records');
+  alert('✅ Migrate สำเร็จ! '+total+' records ส่งไป Firebase แล้วครับ');
+}
+
+
 function renderDispatch(){
   if(!me) return;
   var canManage=can(me.role,"approveReq");
@@ -3067,6 +3234,16 @@ if (USE_API) {
   if(el){var sub=el.querySelector('div:last-child');if(sub)sub.textContent='Error: '+e.message;}
 }
 })();
+</script>
+
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load', function(){
+    navigator.serviceWorker.register('sw.js')
+      .then(function(reg){ console.log('[SW] registered:', reg.scope); })
+      .catch(function(e){ console.log('[SW] failed:', e); });
+  });
+}
 </script>
 </body>
 </html>
