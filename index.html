@@ -2255,57 +2255,123 @@ function filterByMonth(arr, dateField){
 
 function exportHistoryPDF(){
   var month = histMonthFilter||"ทั้งหมด";
-  var title = "ประวัติการใช้รถ — "+month;
+  var printDate = new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'});
 
-  // รวม VEHICLE_HISTORY เดือนนั้น
-  var vhist = filterByMonth(VEHICLE_HISTORY||[], "date");
-  var wreqs = filterByMonth(WDS||[], "date");
+  // ── กรองข้อมูลแต่ละหมวด ──
+  var vhist   = filterByMonth((VEHICLE_HISTORY&&VEHICLE_HISTORY.length?VEHICLE_HISTORY:VEHICLE_LOGS)||[], "createdAt");
+  var reqs    = filterByMonth(REQS||[], "createdAt").filter(function(r){return r.status==="approved";});
+  var repairs = filterByMonth(REPAIRS||[], "date");
+
+  // ── helper ──
+  function fmtDate(iso){
+    if(!iso)return"—";
+    var d=iso.slice(0,10); return d||"—";
+  }
+  function statusTH(s){
+    return s==="approved"?"✅ อนุมัติ":s==="rejected"?"❌ ปฏิเสธ":s==="done"?"✅ เสร็จ":s==="verified"?"🔍 ตรวจแล้ว":s==="pending"?"⏳ รอดำเนินการ":s||"—";
+  }
+  function priTH(p){return p==="urgent"?"🔴 ด่วน":p==="high"?"🟠 สูง":p==="normal"?"🟡 ปกติ":p||"";}
+  function repTypeTH(t){return t==="item"?"📦 วัสดุ":t==="vehicle"?"🚛 รถ":t||"";}
+
+  var css = "<style>"
+    +"*{box-sizing:border-box;}"
+    +"body{font-family:'Sarabun',sans-serif;padding:28px 32px;font-size:13px;color:#1E293B;margin:0;}"
+    +"h1{font-size:22px;font-weight:800;color:#1D4ED8;margin:0 0 2px;}"
+    +".subtitle{color:#64748B;font-size:12px;margin-bottom:20px;}"
+    +".section{margin-bottom:28px;page-break-inside:avoid;}"
+    +".section-title{font-size:15px;font-weight:700;padding:8px 14px;border-radius:8px 8px 0 0;margin:0;}"
+    +".sec-vehicle .section-title{background:#1D4ED8;color:#fff;}"
+    +".sec-stock   .section-title{background:#059669;color:#fff;}"
+    +".sec-repair  .section-title{background:#D97706;color:#fff;}"
+    +".summary{display:flex;gap:12px;margin:10px 0 14px;flex-wrap:wrap;}"
+    +".box{border-radius:8px;padding:10px 16px;text-align:center;min-width:90px;}"
+    +".box-blue{background:#EFF6FF;border:1px solid #BFDBFE;}"
+    +".box-green{background:#F0FDF4;border:1px solid #86EFAC;}"
+    +".box-amber{background:#FFFBEB;border:1px solid #FDE68A;}"
+    +".box-num{font-size:22px;font-weight:800;}"
+    +".num-blue{color:#1D4ED8;} .num-green{color:#059669;} .num-amber{color:#D97706;}"
+    +".box-label{font-size:10px;color:#64748B;margin-top:2px;}"
+    +"table{width:100%;border-collapse:collapse;}"
+    +"th{padding:7px 10px;text-align:left;font-size:11px;font-weight:700;border-bottom:2px solid #E2E8F0;color:#475569;}"
+    +"td{padding:7px 10px;border-bottom:1px solid #F1F5F9;font-size:12px;vertical-align:top;}"
+    +"tr:nth-child(even) td{background:#F8FAFC;}"
+    +".empty{color:#94A3B8;font-style:italic;padding:12px 10px;}"
+    +"@media print{body{padding:16px;}}"
+    +"</style>";
+
+  // ── ส่วน: การใช้รถ ──
+  var secVeh = "<div class='section sec-vehicle'>"
+    +"<div class='section-title'>🚛 ประวัติการใช้รถ</div>"
+    +"<div style='border:1px solid #BFDBFE;border-top:none;border-radius:0 0 8px 8px;padding:12px;'>"
+    +"<div class='summary'>"
+    +"<div class='box box-blue'><div class='box-num num-blue'>"+vhist.length+"</div><div class='box-label'>ครั้งที่ใช้</div></div>"
+    +"<div class='box box-blue'><div class='box-num num-blue'>"+([...new Set(vhist.map(function(x){return x.vehicleName||x.vehicleId;}))].filter(Boolean).length)+"</div><div class='box-label'>คันที่ใช้</div></div>"
+    +"<div class='box box-blue'><div class='box-num num-blue'>"+([...new Set(vhist.map(function(x){return x.driver;}))].filter(Boolean).length)+"</div><div class='box-label'>คนขับ</div></div>"
+    +"</div>"
+    +"<table><thead><tr><th>#</th><th>วันที่</th><th>รถ</th><th>คนขับ</th><th>เวลาออก</th><th>เวลากลับ</th><th>โครงการ</th><th>บันทึกกลับโดย</th></tr></thead><tbody>"
+    +(vhist.length
+      ? vhist.map(function(h,i){
+          return "<tr><td>"+(i+1)+"</td><td>"+fmtDate(h.createdAt||h.outDate||h.date)
+            +"</td><td>"+(h.vehicleName||"")+"</td><td>"+(h.driver||"")
+            +"</td><td>"+(h.timeOut||"—")+"</td><td>"+(h.timeIn||"—")
+            +"</td><td>"+(h.proj||h.currentProj||"")+"</td><td>"+(h.returnBy||"")+"</td></tr>";
+        }).join("")
+      : "<tr><td colspan='8' class='empty'>ไม่มีข้อมูลในเดือนนี้</td></tr>")
+    +"</tbody></table></div></div>";
+
+  // ── ส่วน: เบิกของ ──
+  var totalQty = reqs.reduce(function(s,r){return s+(parseFloat(r.qty)||0);},0);
+  var secStock = "<div class='section sec-stock'>"
+    +"<div class='section-title'>📦 ประวัติการเบิกของ</div>"
+    +"<div style='border:1px solid #86EFAC;border-top:none;border-radius:0 0 8px 8px;padding:12px;'>"
+    +"<div class='summary'>"
+    +"<div class='box box-green'><div class='box-num num-green'>"+reqs.length+"</div><div class='box-label'>รายการเบิก</div></div>"
+    +"<div class='box box-green'><div class='box-num num-green'>"+totalQty+"</div><div class='box-label'>จำนวนรวม</div></div>"
+    +"<div class='box box-green'><div class='box-num num-green'>"+([...new Set(reqs.map(function(x){return x.reqName;}))].filter(Boolean).length)+"</div><div class='box-label'>ผู้เบิก</div></div>"
+    +"</div>"
+    +"<table><thead><tr><th>#</th><th>วันที่</th><th>รายการ</th><th>จำนวน</th><th>หน่วย</th><th>โครงการ</th><th>ผู้เบิก</th><th>อนุมัติโดย</th></tr></thead><tbody>"
+    +(reqs.length
+      ? reqs.map(function(r,i){
+          return "<tr><td>"+(i+1)+"</td><td>"+fmtDate(r.createdAt||r.date)
+            +"</td><td>"+(r.itemName||"")+"</td><td>"+(r.qty||"")
+            +"</td><td>"+(r.unit||"")+"</td><td>"+(r.proj||"")
+            +"</td><td>"+(r.reqName||"")+"</td><td>"+(r.approvedBy||"")+"</td></tr>";
+        }).join("")
+      : "<tr><td colspan='8' class='empty'>ไม่มีข้อมูลในเดือนนี้</td></tr>")
+    +"</tbody></table></div></div>";
+
+  // ── ส่วน: การซ่อม ──
+  var doneCount = repairs.filter(function(r){return r.status==="done"||r.status==="verified";}).length;
+  var secRepair = "<div class='section sec-repair'>"
+    +"<div class='section-title'>🔧 ประวัติการซ่อม</div>"
+    +"<div style='border:1px solid #FDE68A;border-top:none;border-radius:0 0 8px 8px;padding:12px;'>"
+    +"<div class='summary'>"
+    +"<div class='box box-amber'><div class='box-num num-amber'>"+repairs.length+"</div><div class='box-label'>รายการซ่อม</div></div>"
+    +"<div class='box box-amber'><div class='box-num num-amber'>"+doneCount+"</div><div class='box-label'>เสร็จแล้ว</div></div>"
+    +"<div class='box box-amber'><div class='box-num num-amber'>"+(repairs.length-doneCount)+"</div><div class='box-label'>รอดำเนินการ</div></div>"
+    +"</div>"
+    +"<table><thead><tr><th>#</th><th>วันที่</th><th>ประเภท</th><th>รายการ</th><th>ความเร่งด่วน</th><th>รายละเอียด</th><th>ผู้แจ้ง</th><th>สถานะ</th><th>ดำเนินการโดย</th></tr></thead><tbody>"
+    +(repairs.length
+      ? repairs.map(function(r,i){
+          return "<tr><td>"+(i+1)+"</td><td>"+fmtDate(r.date)
+            +"</td><td>"+repTypeTH(r.type)+"</td><td>"+(r.itemName||"")
+            +"</td><td>"+priTH(r.priority)+"</td><td>"+(r.desc||"")
+            +"</td><td>"+(r.reqName||"")+"</td><td>"+statusTH(r.status)
+            +"</td><td>"+(r.doneBy||"—")+"</td></tr>";
+        }).join("")
+      : "<tr><td colspan='9' class='empty'>ไม่มีข้อมูลในเดือนนี้</td></tr>")
+    +"</tbody></table></div></div>";
 
   var html = "<html><head><meta charset='UTF-8'/>"
-    +"<style>body{font-family:Sarabun,sans-serif;padding:24px;font-size:13px;}"
-    +"h1{font-size:20px;color:#1D4ED8;margin-bottom:4px;}"
-    +"h2{font-size:15px;color:#475569;margin:20px 0 8px;border-bottom:2px solid #E2E8F0;padding-bottom:4px;}"
-    +"table{width:100%;border-collapse:collapse;margin-bottom:16px;}"
-    +"th{background:#1D4ED8;color:#fff;padding:8px 10px;text-align:left;font-size:12px;}"
-    +"td{padding:7px 10px;border-bottom:1px solid #F1F5F9;font-size:12px;}"
-    +"tr:nth-child(even){background:#F8FAFC;}"
-    +".summary{display:flex;gap:16px;margin:12px 0;}"
-    +".summary-box{background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 16px;text-align:center;}"
-    +".summary-num{font-size:24px;font-weight:bold;color:#1D4ED8;}"
-    +".summary-label{font-size:11px;color:#64748B;}"
-    +"</style></head><body>"
+    +"<link href='https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap' rel='stylesheet'/>"
+    +css+"</head><body>"
     +"<h1>🏗️ จักรวาล BUILD STORE</h1>"
-    +"<div style='color:#64748B;font-size:12px;margin-bottom:16px;'>ออกรายงาน: "+new Date().toLocaleDateString('th-TH',{year:'numeric',month:'long',day:'numeric'})+" · เดือน: "+month+"</div>"
+    +"<div class='subtitle'>รายงานประจำเดือน: <b>"+month+"</b> &nbsp;·&nbsp; ออกรายงาน: "+printDate+"</div>"
+    +secVeh+secStock+secRepair
+    +"</body></html>";
 
-    // Summary boxes
-    +"<div class='summary'>"
-    +"<div class='summary-box'><div class='summary-num'>"+vhist.length+"</div><div class='summary-label'>ครั้งที่วิ่ง</div></div>"
-    +"<div class='summary-box'><div class='summary-num'>"+([...new Set(vhist.map(function(x){return x.vehicleName;}))].length)+"</div><div class='summary-label'>รถที่ใช้</div></div>"
-    +"<div class='summary-box'><div class='summary-num'>"+([...new Set(vhist.map(function(x){return x.driver;}))].length)+"</div><div class='summary-label'>คนขับ</div></div>"
-    +"</div>"
-
-    // ตารางประวัติรถ
-    +"<h2>🚛 ประวัติการใช้รถ ("+vhist.length+" ครั้ง)</h2>"
-    +"<table><thead><tr><th>วันที่</th><th>รถ</th><th>คนขับ</th><th>ออก</th><th>กลับ</th><th>โครงการ</th><th>บันทึกกลับโดย</th></tr></thead><tbody>"
-    +vhist.map(function(h){
-      return "<tr><td>"+(h.date||"")+"</td><td>"+h.vehicleName+"</td><td>"+h.driver
-        +"</td><td>"+h.timeOut+"</td><td>"+(h.timeIn||"—")+"</td><td>"+(h.proj||"")+"</td><td>"+(h.returnBy||"")+"</td></tr>";
-    }).join("")
-    +"</tbody></table>";
-
-  // ตารางเบิกวัสดุ
-  if(wreqs.length){
-    html += "<h2>📦 ประวัติการเบิกวัสดุ ("+wreqs.length+" รายการ)</h2>"
-      +"<table><thead><tr><th>วันที่</th><th>ผู้เบิก</th><th>รายการ</th><th>จำนวน</th><th>โครงการ</th></tr></thead><tbody>"
-      +wreqs.map(function(w){
-        return "<tr><td>"+(w.date||"")+"</td><td>"+(w.reqName||"")+"</td><td>"+
-          (w.items?JSON.stringify(w.items):"")+"</td><td></td><td>"+(w.proj||"")+"</td></tr>";
-      }).join("")+"</tbody></table>";
-  }
-
-  html += "</body></html>";
-
-  var win = window.open('','_blank');
+  var win=window.open('','_blank');
+  if(!win){alert("กรุณาอนุญาต popup แล้วลองใหม่");return;}
   win.document.write(html);
   win.document.close();
   win.print();
