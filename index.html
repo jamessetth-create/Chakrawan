@@ -2921,6 +2921,104 @@ function migrateToFirebase(){
   alert('✅ Migrate done! '+total+' records');
 }
 
+// ── Booking / VehRequest helpers ─────────────────────────────────────
+function toggleBookingPanel(){
+  var p=g("booking-panel");
+  if(!p)return;
+  p.style.display=(p.style.display==="none"||!p.style.display)?"flex":"none";
+}
+function openBookingModal(vehicleId){
+  hide("booking-err");
+  var vsel=g("bk-veh-sel");
+  if(vsel){
+    vsel.innerHTML="<option value=''>-- เลือกรถ --</option>"
+      +VEHICLES.filter(function(v){return v.status!=="repair"&&v.status!=="broken";}).map(function(v){
+        return "<option value='"+v.id+"'"+(v.id===vehicleId?" selected":"")+">"+(v.name||"")+(v.plate?" ["+v.plate+"]":"")+"</option>";
+      }).join("");
+  }
+  var dsel=g("bk-driver-sel");
+  if(dsel){dsel.innerHTML="<option value=''>-- เลือกคนขับ --</option>"+DRIVERS.map(function(d){return "<option value='"+d.name+"'>"+d.name+"</option>";}).join("");}
+  var dother=g("bk-driver-other");if(dother)dother.value="";
+  var psel=g("bk-proj-sel");
+  if(psel){psel.innerHTML="<option value=''>-- เลือกโครงการ --</option>"+PROJECTS.map(function(p){return "<option>"+p.name+"</option>";}).join("")+"<option value='other'>อื่นๆ</option>";}
+  if(g("bk-date"))g("bk-date").value=todayStr();
+  if(g("bk-time"))g("bk-time").value=nowTimeStr();
+  if(g("bk-note"))g("bk-note").value="";
+  openMod("mod-booking");
+}
+function openBookingModalForDriver(driverName){
+  openBookingModal("");
+  var dsel=g("bk-driver-sel");if(dsel)dsel.value=driverName;
+}
+function confirmBooking(bookingId){
+  var b=TRIP_BOOKINGS.filter(function(x){return x.id===bookingId;})[0];
+  if(!b){alert("ไม่พบข้อมูลการจอง");return;}
+  openDispatchOut(b.vehicleId);
+  var dsel=g("do-driver-sel");if(dsel&&b.driver)dsel.value=b.driver;
+  var dother=g("do-driver-other");if(dother)dother.value="";
+  var tout=g("do-time-out");if(tout&&b.scheduledTime)tout.value=b.scheduledTime;
+  var psel=g("do-proj-sel");if(psel&&b.proj)psel.value=b.proj;
+  b.status="confirmed";
+  apiUpdate("TRIP_BOOKINGS",b.id,b);
+}
+function openVehRequest(vehicleId){
+  var v=VEHICLES.filter(function(x){return x.id===vehicleId;})[0]||{};
+  hide("vr-err");
+  if(g("vr-veh-info"))g("vr-veh-info").innerHTML="<b>"+(v.name||"")+"</b>"+(v.plate?" ["+v.plate+"]":"");
+  var psel=g("vr-proj-sel");
+  if(psel){psel.innerHTML="<option value=''>-- เลือกโครงการ --</option>"+PROJECTS.map(function(p){return "<option>"+p.name+"</option>";}).join("")+"<option value='other'>อื่นๆ</option>";}
+  if(g("vr-name"))g("vr-name").value=me?me.name:"";
+  if(g("vr-date"))g("vr-date").value=todayStr();
+  if(g("vr-time"))g("vr-time").value=nowTimeStr();
+  if(g("vr-proj-other"))g("vr-proj-other").value="";
+  if(g("vr-note"))g("vr-note").value="";
+  if(g("vr-submit"))g("vr-submit").dataset.vehId=vehicleId;
+  openMod("mod-veh-request");
+}
+function approveVehRequest(requestId,approve){
+  var b=TRIP_BOOKINGS.filter(function(x){return x.id===requestId;})[0];if(!b)return;
+  b.status=approve?"pending":"rejected";
+  if(approve){b.approvedBy=me.name;b.approvedAt=new Date().toISOString();}
+  apiUpdate("TRIP_BOOKINGS",b.id,b);
+  fbUpdate("TRIP_BOOKINGS",b.id,b);
+  renderDispatch();
+}
+if(g("bk-cancel"))g("bk-cancel").onclick=function(){closeMod("mod-booking");};
+if(g("bk-confirm"))g("bk-confirm").onclick=function(){
+  hide("booking-err");
+  var vehId=g("bk-veh-sel").value;
+  var driver=(g("bk-driver-other").value||"").trim()||g("bk-driver-sel").value;
+  var date=g("bk-date").value, time=g("bk-time").value;
+  var proj=g("bk-proj-sel").value, note=(g("bk-note").value||"").trim();
+  if(!vehId||!driver||!date||!time){g("booking-err").textContent="⚠️ กรุณากรอกรถ คนขับ วันที่ และเวลา";show("booking-err");return;}
+  var veh=VEHICLES.filter(function(x){return x.id===vehId;})[0]||{};
+  var nb={id:uid(),vehicleId:vehId,vehicleName:veh.name||"",driver:driver,date:date,scheduledTime:time,proj:proj,note:note,status:"pending",createdBy:me.name,createdAt:new Date().toISOString()};
+  TRIP_BOOKINGS.push(nb);
+  apiSave("TRIP_BOOKINGS",nb);
+  closeMod("mod-booking");
+  addTicker("📅 จองรถ "+(veh.name||"")+" — "+driver+" "+date+" "+time);
+  renderDispatch();
+};
+if(g("vr-cancel"))g("vr-cancel").onclick=function(){closeMod("mod-veh-request");};
+if(g("vr-submit"))g("vr-submit").onclick=function(){
+  hide("vr-err");
+  var vehId=this.dataset.vehId;
+  var name=(g("vr-name").value||"").trim();
+  var date=g("vr-date").value, time=g("vr-time").value;
+  var proj=g("vr-proj-sel").value||g("vr-proj-other").value.trim();
+  var note=(g("vr-note").value||"").trim();
+  if(!name||!date){g("vr-err").textContent="⚠️ กรุณากรอกชื่อและวันที่";show("vr-err");return;}
+  var veh=VEHICLES.filter(function(x){return x.id===vehId;})[0]||{};
+  var nr={id:uid(),vehicleId:vehId,vehicleName:veh.name||"",driver:name,date:date,scheduledTime:time,proj:proj,note:note,status:"requested",createdBy:me.name,createdAt:new Date().toISOString()};
+  TRIP_BOOKINGS.push(nr);
+  apiSave("TRIP_BOOKINGS",nr);
+  closeMod("mod-veh-request");
+  addTicker("🙋 "+name+" ขอใช้รถ "+(veh.name||"")+" วันที่ "+date);
+  renderDispatch();
+};
+if(g("bpanel-close"))g("bpanel-close").onclick=function(){var p=g("booking-panel");if(p)p.style.display="none";};
+if(g("bpanel-add"))g("bpanel-add").onclick=function(){var p=g("booking-panel");if(p)p.style.display="none";openBookingModal("");};
+
 function renderDispatch(){
   if(!me) return;
   var today = todayStr();
