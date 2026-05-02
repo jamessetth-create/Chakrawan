@@ -1,4 +1,4 @@
-const CACHE_NAME = 'chakrawan-v1';
+const CACHE_NAME = 'chakrawan-v2';
 const ASSETS = [
   '/Chakrawan/',
   '/Chakrawan/index.html',
