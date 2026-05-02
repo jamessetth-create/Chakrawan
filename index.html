@@ -2964,6 +2964,16 @@ function startFirebaseListeners(){
   fbListen('ITEMS',ITEMS,function(){renderStock();});
   fbListen('REPAIRS',REPAIRS,function(){renderRepairList();buildTabs();});
   fbListen('NOTIFS',NOTIFS,function(){updateBell();});
+  fbListen('TRIP_BOOKINGS',TRIP_BOOKINGS,function(){
+    var today=todayStr();
+    TRIP_BOOKINGS.forEach(function(b){
+      if(b.date<today&&(b.status==="pending"||b.status==="requested")){
+        b.status="expired";
+        fbUpdate("TRIP_BOOKINGS",b.id,{status:"expired",updatedAt:new Date().toISOString()});
+      }
+    });
+    renderDispatch();
+  });
   console.log('[FB] All listeners active ✅');
 }
 function migrateToFirebase(){
@@ -3014,6 +3024,7 @@ function confirmBooking(bookingId){
   var psel=g("do-proj-sel");if(psel&&b.proj)psel.value=b.proj;
   b.status="confirmed";
   apiUpdate("TRIP_BOOKINGS",b.id,b);
+  fbUpdate("TRIP_BOOKINGS",b.id,b);
 }
 function openVehRequest(vehicleId){
   var v=VEHICLES.filter(function(x){return x.id===vehicleId;})[0]||{};
@@ -3146,6 +3157,8 @@ function renderDispatch(){
       });
       bookEl.querySelectorAll("[data-book-cancel]").forEach(function(b){
         b.onclick=function(){
+          var tb=TRIP_BOOKINGS.filter(function(x){return x.id===b.dataset.bookCancel;})[0];
+          if(tb){tb.status="cancelled";apiUpdate("TRIP_BOOKINGS",tb.id,tb);fbUpdate("TRIP_BOOKINGS",tb.id,tb);}
           TRIP_BOOKINGS=TRIP_BOOKINGS.filter(function(x){return x.id!==b.dataset.bookCancel;});
           renderDispatch();
         };
