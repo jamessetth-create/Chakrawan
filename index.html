@@ -1403,6 +1403,7 @@ function loginAs(u){
   buildTabs();buildProjSel();buildItemSel();buildRrSels();
   switchTab("stock");updateBell();
   setTimeout(checkAutoAlerts,800);
+  setInterval(function(){if(me)renderDispatch();},60000);
 }
 function logout(){
   if(me&&USE_FIREBASE){try{fbDb.ref('presence/'+me.id).remove();}catch(e){}}
@@ -3109,10 +3110,37 @@ if(g("vr-submit"))g("vr-submit").onclick=function(){
 if(g("bpanel-close"))g("bpanel-close").onclick=function(){var p=g("booking-panel");if(p)p.style.display="none";};
 if(g("bpanel-add"))g("bpanel-add").onclick=function(){var p=g("booking-panel");if(p)p.style.display="none";openBookingModal("");};
 
+function getBookingExpiryTime(b){
+  if(!b.date||!b.scheduledTime)return null;
+  var p=b.scheduledTime.split(':'),h=parseInt(p[0]),m=parseInt(p[1]);
+  var expMins=h*60+m-30; if(expMins<0)expMins=0;
+  return new Date(b.date+'T'+String(Math.floor(expMins/60)).padStart(2,'0')+':'+String(expMins%60).padStart(2,'0')+':00');
+}
+function bookingCountdownHtml(b){
+  var exp=getBookingExpiryTime(b); if(!exp)return'';
+  var rem=Math.floor((exp.getTime()-Date.now())/60000);
+  if(rem<=0)return"<span style='color:#DC2626;font-size:11px;font-weight:700;'>⚠️ หมดเวลาแล้ว</span>";
+  var col=rem<=10?'#DC2626':rem<=30?'#D97706':'#059669';
+  var txt=rem>=60?Math.floor(rem/60)+'ชม. '+(rem%60)+'น.':rem+' นาที';
+  return"<span style='color:"+col+";font-size:11px;font-weight:700;'>⏳ หมดอายุใน "+txt+"</span>";
+}
+function checkAndExpireBookings(){
+  var now=Date.now();
+  TRIP_BOOKINGS.forEach(function(b){
+    if(b.status!=='pending'&&b.status!=='requested')return;
+    var exp=getBookingExpiryTime(b); if(!exp)return;
+    if(now>=exp.getTime()){
+      b.status='expired';
+      apiUpdate("TRIP_BOOKINGS",b.id,{id:b.id,status:'expired',updatedAt:new Date().toISOString()});
+      fbUpdate("TRIP_BOOKINGS",b.id,{status:'expired',updatedAt:new Date().toISOString()});
+    }
+  });
+}
 function renderDispatch(){
   if(!me) return;
   var today = todayStr();
   var canManage = can(me.role,"approveReq"); // manager/supervisor เท่านั้น
+  checkAndExpireBookings();
   console.log('[Dispatch] today='+today+' VEHICLE_LOGS='+VEHICLE_LOGS.length+' dates='+VEHICLE_LOGS.slice(0,3).map(function(l){return l.date+'|'+l.vehicleName+'|in='+l.timeIn;}).join(','));
 
   // ── bind ปุ่มใน dispatch tab ──────────────────────────────────────
@@ -3136,11 +3164,16 @@ function renderDispatch(){
     if(pendingBooks.length){
       bookEl.style.display="block";
       var bookHtml = pendingBooks.map(function(b){
-        return "<div style='background:#FEF3C7;border:1.5px solid #FDE68A;border-radius:12px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;'>"
+        var exp=getBookingExpiryTime(b),rem=exp?Math.floor((exp.getTime()-Date.now())/60000):999;
+        var urgent=rem<=10,warn=rem<=30&&rem>10;
+        var cardBg=urgent?'#FEE2E2':warn?'#FFF7ED':'#FEF3C7';
+        var cardBorder=urgent?'#FCA5A5':warn?'#FED7AA':'#FDE68A';
+        return "<div style='background:"+cardBg+";border:1.5px solid "+cardBorder+";border-radius:12px;padding:12px 16px;margin-bottom:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;'>"
           +"<div style='flex:1;min-width:160px;'>"
           +"<div style='font-weight:700;font-size:13px;color:#92400E;'>📅 "+b.vehicleName+" — "+b.driver+"</div>"
           +"<div style='font-size:12px;color:#475569;margin-top:3px;'>🕐 นัดออก "+b.scheduledTime+(b.proj?" · 📍 "+b.proj:"")+"</div>"
-          +(b.note?"<div style='font-size:11px;color:#64748B;'>📝 "+b.note+"</div>":"")
+          +"<div style='margin-top:4px;'>"+bookingCountdownHtml(b)+"</div>"
+          +(b.note?"<div style='font-size:11px;color:#64748B;margin-top:2px;'>📝 "+b.note+"</div>":"")
           +"<div style='font-size:11px;color:#94A3B8;margin-top:2px;'>จองโดย: "+b.createdBy+"</div>"
           +"</div>"
           +(canManage
