@@ -2797,6 +2797,26 @@ if(g("drv-edit-save"))g("drv-edit-save").onclick=function(){
 
 // ─── DISPATCH (เรียกใช้รถ) ────────────────────────────────────────
 var dispatchReturnId = null;
+var dispatchReturnVehId = null;
+
+function openDispatchReturn(vehId){
+  dispatchReturnVehId = vehId;
+  var l = VEHICLE_LOGS.filter(function(x){ return x.vehicleId===vehId && (!x.timeIn||x.timeIn===''); })[0];
+  dispatchReturnId = l ? l.id : null;
+  var v = VEHICLES.filter(function(x){ return x.id===vehId; })[0]||{};
+  var driver = v.currentDriver||v.driver||(l&&l.driver)||'';
+  var timeOut = v.timeOut||(l&&l.timeOut)||'';
+  var proj = v.currentProj||(l&&l.proj)||'';
+  var info = '<b>'+(v.name||(l&&l.vehicleName)||'')+'</b>'
+    +(v.plate?' ['+v.plate+']':'')
+    +'<br>คนขับ: '+(driver||'-')
+    +(timeOut?'<br>เวลาออก: '+timeOut:'')
+    +(proj?'<br>โครงการ: '+proj:'');
+  if(g('dr-info'))g('dr-info').innerHTML=info;
+  if(g('dr-time-in'))g('dr-time-in').value=nowTimeStr();
+  if(g('dr-note'))g('dr-note').value='';
+  openMod('mod-dispatch-return');
+}
 
 // ── Firebase Listeners + Migrate ─────────────────────────────────────
 var _fbStarted=false;
@@ -3126,9 +3146,18 @@ if(g("dr-confirm"))g("dr-confirm").onclick=function(){
   if(!timeIn){alert("กรุณาระบุเวลากลับ");return;}
   var l=VEHICLE_LOGS.filter(function(x){return x.id===dispatchReturnId;})[0];
   if(!l){
-    console.error("[dr-confirm] log not found id:"+dispatchReturnId);
-    alert("ไม่พบข้อมูลการใช้รถ กรุณา refresh แล้วลองใหม่");
-    return;
+    var _veh=VEHICLES.filter(function(x){return x.id===dispatchReturnVehId;})[0];
+    if(!_veh){
+      console.error("[dr-confirm] log not found id:"+dispatchReturnId);
+      alert("ไม่พบข้อมูลการใช้รถ กรุณา refresh แล้วลองใหม่");
+      var drBtn2=g("dr-confirm"); if(drBtn2)drBtn2.disabled=false;
+      return;
+    }
+    l={id:null,vehicleId:_veh.id,vehicleName:_veh.name||"",
+       driver:_veh.currentDriver||_veh.driver||"",
+       timeOut:_veh.timeOut||"",outDate:_veh.outDate||todayStr(),
+       proj:_veh.currentProj||"",currentProj:_veh.currentProj||"",
+       note:_veh.note||"",logBy:_veh.driver||""};
   }
   l.timeIn=timeIn;
   l.returnBy=me.name;
