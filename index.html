@@ -3228,7 +3228,7 @@ if(g("do-confirm"))g("do-confirm").onclick=function(){
   var vehObj=VEHICLES.filter(function(x){return x.id===vehId;})[0];
   if(vehObj){vehObj.status="out";vehObj.currentDriver=driver;vehObj.timeOut=timeOut;vehObj.outDate=todayStr();vehObj.currentProj=proj;vehObj.timeIn="";vehObj.returnBy="";}
   console.log('[DO-CONFIRM] VEHICLES status=out driver='+driver);
-  addTicker("✅ "+b.vehicleName+" ออกงานแล้ว — "+b.driver);
+  addTicker("✅ "+(veh.name||"")+" ออกงานแล้ว — "+driver);
   renderDispatch();
 }
 
