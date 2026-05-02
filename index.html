@@ -769,9 +769,10 @@ button:active{transform:scale(.97);}
     <select id="bk-driver-sel" style="margin-bottom:6px;"></select>
     <input id="bk-driver-other" type="text" placeholder="หรือพิมพ์ชื่อคนขับ..." autocomplete="off" style="margin-top:6px;font-size:13px;"/>
   </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;">
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-top:12px;">
     <div><label class="lbl">วันที่ *</label><input id="bk-date" type="date"/></div>
     <div><label class="lbl">เวลานัด *</label><input id="bk-time" type="time"/></div>
+    <div><label class="lbl">เวลาคืน (ประมาณ)</label><input id="bk-return-time" type="time"/></div>
   </div>
   <div class="mt"><label class="lbl">โครงการ / จุดหมาย</label><select id="bk-proj-sel"></select></div>
   <div class="mt"><label class="lbl">หมายเหตุ / รายละเอียด</label>
@@ -2943,6 +2944,7 @@ function openBookingModal(vehicleId){
   if(psel){psel.innerHTML="<option value=''>-- เลือกโครงการ --</option>"+PROJECTS.map(function(p){return "<option>"+p.name+"</option>";}).join("")+"<option value='other'>อื่นๆ</option>";}
   if(g("bk-date"))g("bk-date").value=todayStr();
   if(g("bk-time"))g("bk-time").value=nowTimeStr();
+  if(g("bk-return-time"))g("bk-return-time").value="";
   if(g("bk-note"))g("bk-note").value="";
   openMod("mod-booking");
 }
@@ -2984,15 +2986,40 @@ function approveVehRequest(requestId,approve){
   renderDispatch();
 }
 if(g("bk-cancel"))g("bk-cancel").onclick=function(){closeMod("mod-booking");};
+function hasBookingConflict(vehicleId,date,startTime,returnTime,excludeId){
+  function toMins(t){if(!t||t==="")return null;var p=t.split(':');return parseInt(p[0])*60+parseInt(p[1]);}
+  var s1=toMins(startTime);
+  var e1=returnTime?toMins(returnTime):(s1!==null?s1+240:null);
+  var bookings=TRIP_BOOKINGS.filter(function(b){
+    return b.vehicleId===vehicleId&&b.date===date&&b.status!=='rejected'&&b.status!=='cancelled'&&b.id!==excludeId;
+  });
+  for(var i=0;i<bookings.length;i++){
+    var b=bookings[i];
+    var s2=toMins(b.scheduledTime);
+    var e2=b.returnTime?toMins(b.returnTime):(s2!==null?s2+240:null);
+    if(s1!==null&&s2!==null&&e1!==null&&e2!==null){
+      if(s1<e2&&s2<e1)return{reason:"รถถูกจองโดย "+b.driver+" ช่วง "+b.scheduledTime+(b.returnTime?"–"+b.returnTime:"")};
+    } else {
+      return{reason:"มีการจองรถในวันเดียวกัน โดย "+b.driver+" เวลา "+(b.scheduledTime||"?")};
+    }
+  }
+  return null;
+}
 if(g("bk-confirm"))g("bk-confirm").onclick=function(){
   hide("booking-err");
   var vehId=g("bk-veh-sel").value;
   var driver=(g("bk-driver-other").value||"").trim()||g("bk-driver-sel").value;
   var date=g("bk-date").value, time=g("bk-time").value;
+  var returnTime=g("bk-return-time")?g("bk-return-time").value:"";
   var proj=g("bk-proj-sel").value, note=(g("bk-note").value||"").trim();
   if(!vehId||!driver||!date||!time){g("booking-err").textContent="⚠️ กรุณากรอกรถ คนขับ วันที่ และเวลา";show("booking-err");return;}
+  // ตรวจเวลาทับซ้อน
+  var vehOut=VEHICLES.filter(function(v){return v.id===vehId&&v.status==='out';})[0];
+  if(vehOut){g("booking-err").textContent="⚠️ รถออกงานอยู่แล้ว ยังไม่ได้บันทึกกลับ";show("booking-err");return;}
+  var conflict=hasBookingConflict(vehId,date,time,returnTime,null);
+  if(conflict){g("booking-err").textContent="⚠️ "+conflict.reason;show("booking-err");return;}
   var veh=VEHICLES.filter(function(x){return x.id===vehId;})[0]||{};
-  var nb={id:uid(),vehicleId:vehId,vehicleName:veh.name||"",driver:driver,date:date,scheduledTime:time,proj:proj,note:note,status:"pending",createdBy:me.name,createdAt:new Date().toISOString()};
+  var nb={id:uid(),vehicleId:vehId,vehicleName:veh.name||"",driver:driver,date:date,scheduledTime:time,returnTime:returnTime,proj:proj,note:note,status:"pending",createdBy:me.name,createdAt:new Date().toISOString()};
   TRIP_BOOKINGS.push(nb);
   apiSave("TRIP_BOOKINGS",nb);
   closeMod("mod-booking");
@@ -3313,6 +3340,21 @@ if(g("do-confirm"))g("do-confirm").onclick=function(){
     g("dispatch-err").textContent="⚠️ รถนี้ออกงานอยู่แล้ว กรุณาบันทึกกลับก่อน";
     show("dispatch-err");
     var btn2=g("do-confirm"); if(btn2)btn2.disabled=false;
+    return;
+  }
+  // ตรวจการจองที่ยังรอ (pending) ที่อาจทับซ้อน
+  var pendingConflict=TRIP_BOOKINGS.filter(function(b){
+    if(b.vehicleId!==vehId||b.date!==date||b.status==='rejected'||b.status==='cancelled'||b.status==='confirmed') return false;
+    function _m(t){if(!t||t==="")return null;var p=t.split(':');return parseInt(p[0])*60+parseInt(p[1]);}
+    var s1=_m(timeOut), e1=s1!==null?s1+240:null;
+    var s2=_m(b.scheduledTime), e2=b.returnTime?_m(b.returnTime):(s2!==null?s2+240:null);
+    if(s1!==null&&s2!==null&&e1!==null&&e2!==null) return s1<e2&&s2<e1;
+    return true;
+  })[0];
+  if(pendingConflict){
+    g("dispatch-err").textContent="⚠️ มีการจองรถคันนี้โดย "+pendingConflict.driver+" เวลา "+pendingConflict.scheduledTime+" — กรุณายืนยันจากรายการจองก่อน หรือยกเลิกการจองนั้น";
+    show("dispatch-err");
+    var btn3=g("do-confirm"); if(btn3)btn3.disabled=false;
     return;
   }
   var log={id:uid(),vehicleId:vehId,vehicleName:veh.name||"",driver:driver,
