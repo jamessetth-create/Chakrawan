@@ -38,6 +38,7 @@ button:active{transform:scale(.97);}
 .lbl{font-size:12px;font-weight:700;color:#64748B;display:block;margin-bottom:5px;letter-spacing:.3px;}
 .tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;}
 .rh:hover{background:#EFF6FF!important;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
 .aok{background:#DCFCE7;border:1.5px solid #86EFAC;border-radius:8px;padding:10px 14px;margin-bottom:14px;color:#166534;font-size:13px;font-weight:600;}
 .aerr{background:#FEE2E2;border:1.5px solid #FCA5A5;border-radius:8px;padding:10px 14px;margin-bottom:14px;color:#991B1B;font-size:13px;font-weight:600;}
 .tab-btn{cursor:pointer;padding:9px 14px;font-family:'Sarabun',sans-serif;font-weight:700;font-size:12px;border:1.5px solid transparent;border-radius:8px;background:transparent;color:#64748B;transition:all .15s;white-space:nowrap;position:relative;margin:4px 2px;}
@@ -110,6 +111,13 @@ button:active{transform:scale(.97);}
     <div style="display:flex;align-items:center;gap:8px;padding:11px 0;flex-shrink:0;">
       <div id="notif-bell" style="position:relative;cursor:pointer;width:34px;height:34px;background:rgba(255,255,255,.12);border-radius:8px;display:none;align-items:center;justify-content:center;font-size:17px;border:1.5px solid rgba(255,255,255,.2);">🔔
         <span id="notif-badge" style="display:none;position:absolute;top:-5px;right:-5px;background:#DC2626;color:#fff;border-radius:50%;width:17px;height:17px;font-size:9px;align-items:center;justify-content:center;font-weight:800;"></span>
+      </div>
+      <div id="online-indicator" style="display:none;position:relative;cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.12);border:1.5px solid rgba(255,255,255,.2);border-radius:8px;padding:5px 9px;">
+          <span style="width:7px;height:7px;background:#22C55E;border-radius:50%;display:inline-block;animation:pulse 2s infinite;flex-shrink:0;"></span>
+          <span id="online-count" style="font-size:11px;font-weight:700;color:#fff;">1</span>
+        </div>
+        <div id="online-panel" style="display:none;position:absolute;top:42px;right:0;min-width:200px;background:#fff;border:1.5px solid #E2E8F0;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);z-index:500;padding:8px 0;"></div>
       </div>
       <div style="text-align:right;">
         <div id="hdr-name" style="font-size:12px;font-weight:700;color:#fff;"></div>
@@ -1172,6 +1180,7 @@ var VEHICLE_LOGS=[];
 var VEHICLE_HISTORY=[];
 var ITEM_REPORTS=[];
 var TRIP_BOOKINGS=[]; // จองรถล่วงหน้า
+var PRESENCE={}; // ผู้ใช้ออนไลน์
 var NOTIFS=[];
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────
@@ -1315,7 +1324,14 @@ document.addEventListener("click",function(e){
   if(bp&&bb&&bp.style.display==="flex"&&!bp.contains(e.target)&&!bb.contains(e.target))bp.style.display="none";
   var sr=g("g-search-result"),si=g("g-search");
   if(sr&&si&&sr.style.display!=="none"&&!sr.contains(e.target)&&e.target!==si)sr.style.display="none";
+  var op=g("online-panel"),oi=g("online-indicator");
+  if(op&&oi&&op.style.display==="block"&&!oi.contains(e.target))op.style.display="none";
 });
+var _oi=g("online-indicator");
+if(_oi)_oi.onclick=function(e){
+  e.stopPropagation();
+  var p=g("online-panel");if(p)p.style.display=p.style.display==="block"?"none":"block";
+};
 
 // ─── GLOBAL SEARCH ────────────────────────────────────────────────────
 g("g-search").oninput=function(){
@@ -1377,6 +1393,7 @@ function loginAs(u){
   }catch(e){ console.error('[loginAs] localStorage error:', e); }
   hide("pg-login");show("pg-app");
   startFirebaseListeners();
+  startPresence(u);
   window.migrateToFirebase=migrateToFirebase;window.VEHICLES=VEHICLES;window.DRIVERS=DRIVERS;
   g("hdr-name").textContent=u.name;
   g("hdr-role").innerHTML="<span class='tag' style='background:"+ROLE[u.role].color+"25;color:"+ROLE[u.role].color+";font-size:10px;'>"+ROLE[u.role].icon+" "+ROLE[u.role].label+"</span>";
@@ -1388,7 +1405,10 @@ function loginAs(u){
   setTimeout(checkAutoAlerts,800);
 }
 function logout(){
+  if(me&&USE_FIREBASE){try{fbDb.ref('presence/'+me.id).remove();}catch(e){}}
   me=null;
+  PRESENCE={};
+  var ind=g("online-indicator");if(ind)ind.style.display="none";
   try{localStorage.removeItem("chakrawan_session");sessionStorage.removeItem("chakrawan_session");}catch(e){}
   hide("pg-app");show("pg-login");
   try{
@@ -2900,6 +2920,38 @@ function openDispatchReturn(vehId){
   openMod('mod-dispatch-return');
 }
 
+// ── Online Presence ───────────────────────────────────────────────────
+function startPresence(u){
+  if(!USE_FIREBASE)return;
+  var ref=fbDb.ref('presence/'+u.id);
+  ref.set({id:u.id,name:u.name,role:u.role,lastSeen:Date.now()});
+  ref.onDisconnect().remove();
+  fbDb.ref('presence').on('value',function(snap){
+    PRESENCE={};
+    var d=snap.val()||{};
+    Object.values(d).forEach(function(p){if(p&&p.id)PRESENCE[p.id]=p;});
+    updateOnlineUI();
+  });
+  setInterval(function(){if(USE_FIREBASE)fbDb.ref('presence/'+u.id).update({lastSeen:Date.now()});},30000);
+}
+function updateOnlineUI(){
+  var ind=g("online-indicator"),cntEl=g("online-count"),panel=g("online-panel");
+  if(!ind||!me)return;
+  var users=Object.values(PRESENCE);
+  ind.style.display=users.length?"flex":"none";
+  if(cntEl)cntEl.textContent=users.length;
+  if(panel){
+    panel.innerHTML='<div style="padding:6px 14px 4px;font-size:11px;font-weight:700;color:#94A3B8;letter-spacing:.05em;">ออนไลน์ตอนนี้</div>'
+      +users.map(function(p){
+        var r=ROLE[p.role]||{icon:"👤",label:"ผู้ใช้",color:"#64748B"};
+        return "<div style='padding:5px 14px;display:flex;align-items:center;gap:8px;font-size:12px;'>"
+          +"<span style='width:6px;height:6px;background:#22C55E;border-radius:50%;flex-shrink:0;'></span>"
+          +"<span style='font-weight:700;color:#1E293B;flex:1;'>"+(p.name||"?")+(p.id===me.id?" (คุณ)":"")+"</span>"
+          +"<span style='color:"+r.color+";font-size:10px;'>"+r.icon+"</span>"
+          +"</div>";
+      }).join("");
+  }
+}
 // ── Firebase Listeners + Migrate ─────────────────────────────────────
 var _fbStarted=false;
 function startFirebaseListeners(){
@@ -3060,7 +3112,7 @@ function renderDispatch(){
     qbBtn.style.display = "inline-flex";
     qbBtn.onclick = function(){toggleBookingPanel();};
     // badge จำนวนการจองวันนี้
-    var todayBookCnt = TRIP_BOOKINGS.filter(function(b){return b.date===today&&b.status!=="rejected";}).length;
+    var todayBookCnt = TRIP_BOOKINGS.filter(function(b){return b.date===today&&(b.status==="pending"||b.status==="requested");}).length;
     qbBtn.textContent = "📅 จองรถ"+(todayBookCnt>0?" ("+todayBookCnt+")":"");
   }
 
