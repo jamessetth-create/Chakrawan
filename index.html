@@ -2078,23 +2078,38 @@ function renderVehicles(){
   var list=vehicleFilter==="all"?VEHICLES:VEHICLES.filter(function(v){return v.status===vehicleFilter;});
   var el=g("vehicle-list");if(!el)return;
   if(!list.length){el.style.display="block";el.innerHTML="<div style='text-align:center;color:#CBD5E1;padding:36px;'>ไม่มีรถ/เครื่องจักรในระบบ</div>";return;}
-  el.style.display="grid";el.style.gridTemplateColumns="repeat(auto-fill,minmax(210px,1fr))";el.style.gap="14px";
-  el.innerHTML=list.map(function(v){
-    var st=VST[v.status]||VST.ok;
-    var thumb=v.img?"<img src='"+v.img+"' style='width:100%;height:120px;object-fit:cover;display:block;border-radius:12px 12px 0 0;' data-vview='"+v.id+"'/>"
-      :"<div style='width:100%;height:120px;background:linear-gradient(135deg,#1E293B,#475569);border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:center;font-size:40px;' data-vview='"+v.id+"'>🚛</div>";
-    return "<div class='card vcard' style='overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;'>"+thumb
-      +"<div style='padding:11px 12px;'>"
-      +"<div style='display:flex;align-items:center;gap:5px;margin-bottom:2px;' data-vview='"+v.id+"'>"
-      +"<div style='width:7px;height:7px;background:"+st.dot+";border-radius:50%;flex-shrink:0;box-shadow:0 0 4px "+st.dot+";'></div>"
-      +"<div style='font-weight:700;font-size:13px;color:#1E293B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+v.name+"</div>"
+  el.style.display="block";
+  var vTypeOrder=["รถบรรทุก 10 ล้อ","รถผสมปูน","รถแบล็คโฮล (Backhoe)","รถตัก","รถเครน","เครื่องจักรอื่นๆ"];
+  var vGroups={};
+  list.forEach(function(v){var t=v.type||"อื่นๆ";if(!vGroups[t])vGroups[t]=[];vGroups[t].push(v);});
+  var vTypes=vTypeOrder.filter(function(t){return vGroups[t]&&vGroups[t].length;});
+  Object.keys(vGroups).forEach(function(t){if(vTypes.indexOf(t)<0)vTypes.push(t);});
+  el.innerHTML=vTypes.map(function(type){
+    var gv=vGroups[type];
+    var cards=gv.map(function(v){
+      var st=VST[v.status]||VST.ok;
+      var thumb=v.img?"<img src='"+v.img+"' style='width:100%;height:120px;object-fit:cover;display:block;border-radius:12px 12px 0 0;' data-vview='"+v.id+"'/>"
+        :"<div style='width:100%;height:120px;background:linear-gradient(135deg,#1E293B,#475569);border-radius:12px 12px 0 0;display:flex;align-items:center;justify-content:center;font-size:40px;' data-vview='"+v.id+"'>🚛</div>";
+      return "<div class='card vcard' style='overflow:hidden;cursor:pointer;transition:transform .15s,box-shadow .15s;'>"+thumb
+        +"<div style='padding:11px 12px;'>"
+        +"<div style='display:flex;align-items:center;gap:5px;margin-bottom:2px;' data-vview='"+v.id+"'>"
+        +"<div style='width:7px;height:7px;background:"+st.dot+";border-radius:50%;flex-shrink:0;box-shadow:0 0 4px "+st.dot+";'></div>"
+        +"<div style='font-weight:700;font-size:13px;color:#1E293B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;'>"+v.name+"</div>"
+        +"</div>"
+        +(v.plate?"<div style='font-size:10px;color:#1D4ED8;font-weight:700;margin-bottom:2px;'>🪪 "+v.plate+"</div>":"")
+        +(v.driver?"<div style='font-size:10px;color:#64748B;margin-bottom:4px;'>👤 "+v.driver+"</div>":"")
+        +"<div style='display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:"+st.bg+";color:"+st.c+";border:1px solid "+st.bd+";'>"+st.icon+" "+st.label+"</div>"
+        +(v.note?"<div style='font-size:11px;color:#475569;background:#F8FAFC;border-radius:6px;padding:5px 8px;border:1px solid #E2E8F0;margin-top:6px;'>"+(v.note.length>50?v.note.slice(0,50)+"…":v.note)+"</div>":"")
+        +(canEdit?"<div style='display:flex;gap:4px;margin-top:8px;justify-content:flex-end;'><button type='button' class='bp2' style='padding:4px 8px;font-size:11px;' data-vlog='"+v.id+"'>📋</button><button type='button' class='bg' style='padding:4px 8px;font-size:11px;' data-vedit='"+v.id+"'>✏️</button><button type='button' class='bd' style='padding:4px 8px;font-size:11px;' data-vdel='"+v.id+"'>🗑️</button></div>":"")
+        +"</div></div>";
+    }).join("");
+    return "<div style='margin-bottom:20px;'>"
+      +"<div style='font-family:Prompt,sans-serif;font-weight:700;font-size:13px;color:#1D4ED8;background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:10px 10px 0 0;padding:9px 14px;display:flex;align-items:center;gap:8px;'>"
+      +"🚛 "+type
+      +"<span style='margin-left:auto;background:#DBEAFE;color:#1D4ED8;font-size:11px;padding:2px 8px;border-radius:20px;'>"+gv.length+" คัน</span>"
       +"</div>"
-      +(v.plate?"<div style='font-size:10px;color:#1D4ED8;font-weight:700;margin-bottom:2px;'>🪪 "+v.plate+"</div>":"")
-      +(v.driver?"<div style='font-size:10px;color:#64748B;margin-bottom:4px;'>👤 "+v.driver+"</div>":"")
-      +"<div style='display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;background:"+st.bg+";color:"+st.c+";border:1px solid "+st.bd+";'>"+st.icon+" "+st.label+"</div>"
-      +(v.note?"<div style='font-size:11px;color:#475569;background:#F8FAFC;border-radius:6px;padding:5px 8px;border:1px solid #E2E8F0;margin-top:6px;'>"+(v.note.length>50?v.note.slice(0,50)+"…":v.note)+"</div>":"")
-      +(canEdit?"<div style='display:flex;gap:4px;margin-top:8px;justify-content:flex-end;'><button type='button' class='bp2' style='padding:4px 8px;font-size:11px;' data-vlog='"+v.id+"'>📋</button><button type='button' class='bg' style='padding:4px 8px;font-size:11px;' data-vedit='"+v.id+"'>✏️</button><button type='button' class='bd' style='padding:4px 8px;font-size:11px;' data-vdel='"+v.id+"'>🗑️</button></div>":"")
-      +"</div></div>";
+      +"<div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;padding:12px;background:#F8FAFC;border:1.5px solid #BFDBFE;border-top:none;border-radius:0 0 10px 10px;'>"
+      +cards+"</div></div>";
   }).join("");
   el.querySelectorAll("[data-vview]").forEach(function(b){b.onclick=function(){openVehicleDetail(b.dataset.vview);};});
   el.querySelectorAll("[data-vlog]").forEach(function(b){b.onclick=function(e){e.stopPropagation();openVehicleLog(b.dataset.vlog);};});
@@ -2968,47 +2983,60 @@ function renderDispatch(){
   if(!VEHICLES.length){
     vehEl.innerHTML="<div style='color:#CBD5E1;font-size:13px;padding:16px;'>ยังไม่มีรถในระบบ</div>";
   } else {
-    vehEl.innerHTML = VEHICLES.map(function(v){
-      // ใช้ VEHICLES.status โดยตรง
-      var isOut = v.status==='out';
-      var activeLog = isOut ? v : null;
-      if(activeLog){activeLog.vehicleName=v.name;activeLog.vehicleId=v.id;activeLog.driver=v.currentDriver||v.driver;}
-      var isOut = !!activeLog;
-      var isRepair = (v.status==="repair" || v.status==="broken");
-      // สีตาม priority: ซ่อม > ออกงาน > ว่าง
-      var bg = isRepair?"#EFF6FF":(isOut?"#FEE2E2":"#F0FDF4");
-      var bd = isRepair?"#BFDBFE":(isOut?"#FCA5A5":"#86EFAC");
-      var dot = isRepair?"#2563EB":(isOut?"#DC2626":"#059669");
-      var vst = VST[v.status]||VST.ok;
-      var statusTxt = isRepair
-        ? vst.icon+" "+vst.label+(v.note?" — "+v.note.slice(0,30):"")
-        : (isOut
-          ? "🔴 ออกงาน — "+(activeLog.driver||"")+(activeLog.proj?" → "+activeLog.proj:"")
-          : "🟢 ว่าง พร้อมใช้งาน");
-      var booked = TRIP_BOOKINGS.filter(function(b){return b.vehicleId===v.id&&b.date===today&&b.status==="pending";})[0];
-      // ผู้รับเหมาขอใช้รถ pending
-      var reqPending = TRIP_BOOKINGS.filter(function(b){return b.vehicleId===v.id&&b.status==="requested"&&b.date===today;})[0];
-      return "<div class='card' style='padding:12px 14px;background:"+bg+";border:1.5px solid "+bd+";'>"
-        +"<div style='display:flex;align-items:center;gap:8px;margin-bottom:6px;'>"
-        +"<div style='width:8px;height:8px;background:"+dot+";border-radius:50%;box-shadow:0 0 4px "+dot+";flex-shrink:0;'></div>"
-        +"<div style='font-weight:700;font-size:13px;color:#1E293B;flex:1;'>"+v.name+"</div>"
-        +(v.plate?"<span style='font-size:10px;color:#1D4ED8;font-weight:700;background:#DBEAFE;padding:2px 7px;border-radius:10px;'>"+v.plate+"</span>":"")
+    var dTypeOrder=["รถบรรทุก 10 ล้อ","รถผสมปูน","รถแบล็คโฮล (Backhoe)","รถตัก","รถเครน","เครื่องจักรอื่นๆ"];
+    var dGroups={};
+    VEHICLES.forEach(function(v){var t=v.type||"อื่นๆ";if(!dGroups[t])dGroups[t]=[];dGroups[t].push(v);});
+    var dTypes=dTypeOrder.filter(function(t){return dGroups[t]&&dGroups[t].length;});
+    Object.keys(dGroups).forEach(function(t){if(dTypes.indexOf(t)<0)dTypes.push(t);});
+    vehEl.innerHTML=dTypes.map(function(type){
+      var gv=dGroups[type];
+      var outCnt=gv.filter(function(v){return v.status==='out';}).length;
+      var avail=gv.length-outCnt;
+      var headerCol=outCnt===gv.length?"#991B1B":outCnt>0?"#D97706":"#065F46";
+      var headerBg=outCnt===gv.length?"#FEF2F2":outCnt>0?"#FFFBEB":"#F0FDF4";
+      var headerBd=outCnt===gv.length?"#FECACA":outCnt>0?"#FDE68A":"#A7F3D0";
+      var cards=gv.map(function(v){
+        var isOut = v.status==='out';
+        var activeLog = isOut ? v : null;
+        if(activeLog){activeLog.vehicleName=v.name;activeLog.vehicleId=v.id;activeLog.driver=v.currentDriver||v.driver;}
+        var isRepair = (v.status==="repair" || v.status==="broken");
+        var bg = isRepair?"#EFF6FF":(isOut?"#FEE2E2":"#F0FDF4");
+        var bd = isRepair?"#BFDBFE":(isOut?"#FCA5A5":"#86EFAC");
+        var dot = isRepair?"#2563EB":(isOut?"#DC2626":"#059669");
+        var vst = VST[v.status]||VST.ok;
+        var statusTxt = isRepair
+          ? vst.icon+" "+vst.label+(v.note?" — "+v.note.slice(0,30):"")
+          : (isOut
+            ? "🔴 ออกงาน — "+(activeLog.driver||"")+(activeLog.proj?" → "+activeLog.proj:"")
+            : "🟢 ว่าง พร้อมใช้งาน");
+        var booked = TRIP_BOOKINGS.filter(function(b){return b.vehicleId===v.id&&b.date===today&&b.status==="pending";})[0];
+        var reqPending = TRIP_BOOKINGS.filter(function(b){return b.vehicleId===v.id&&b.status==="requested"&&b.date===today;})[0];
+        return "<div class='card' style='padding:12px 14px;background:"+bg+";border:1.5px solid "+bd+";'>"
+          +"<div style='display:flex;align-items:center;gap:8px;margin-bottom:6px;'>"
+          +"<div style='width:8px;height:8px;background:"+dot+";border-radius:50%;box-shadow:0 0 4px "+dot+";flex-shrink:0;'></div>"
+          +"<div style='font-weight:700;font-size:13px;color:#1E293B;flex:1;'>"+v.name+"</div>"
+          +(v.plate?"<span style='font-size:10px;color:#1D4ED8;font-weight:700;background:#DBEAFE;padding:2px 7px;border-radius:10px;'>"+v.plate+"</span>":"")
+          +"</div>"
+          +(booked&&!isOut&&!isRepair?"<div style='font-size:11px;color:#D97706;font-weight:600;margin-bottom:4px;'>📅 นัด "+booked.driver+" เวลา "+booked.scheduledTime+"</div>":"")
+          +(reqPending&&canManage?"<div style='font-size:11px;color:#7C3AED;font-weight:600;margin-bottom:4px;'>🙋 "+reqPending.driver+" ขอใช้รถ</div>":"")
+          +"<div style='font-size:11px;color:#475569;margin-bottom:8px;'>"+statusTxt+"</div>"
+          +(isOut&&canManage?"<button type='button' class='bs' style='width:100%;padding:6px;font-size:12px;' data-ret='"+activeLog.id+"'>✅ บันทึกเวลากลับ</button>":"")
+          +(!isOut&&!isRepair&&canManage?"<button type='button' class='bp2' style='width:100%;padding:6px;font-size:12px;margin-bottom:4px;' data-out='"+v.id+"'>🚛 ส่งออกงาน</button>":"")
+          +(!isOut&&!isRepair&&me.role==="contractor"?"<button type='button' class='bw' style='width:100%;padding:6px;font-size:12px;' data-req-veh='"+v.id+"'>🙋 ขอใช้รถ</button>":"")
+          +(isRepair?"<div style='background:#DBEAFE;border-radius:7px;padding:4px 8px;font-size:11px;color:#1E40AF;font-weight:700;text-align:center;'>🔧 ไม่พร้อมใช้งาน — รอซ่อมเสร็จ</div>":"")
+          +(reqPending&&canManage
+            ?"<div style='display:flex;gap:4px;margin-top:4px;'><button type='button' class='bs' style='flex:1;padding:5px;font-size:11px;' data-approve-req='"+reqPending.id+"'>✅ อนุมัติ</button><button type='button' class='bd' style='flex:1;padding:5px;font-size:11px;' data-reject-req='"+reqPending.id+"'>❌ ปฏิเสธ</button></div>"
+            :"")
+          +"</div>";
+      }).join("");
+      return "<div style='margin-bottom:16px;'>"
+        +"<div style='font-family:Prompt,sans-serif;font-weight:700;font-size:13px;color:"+headerCol+";background:"+headerBg+";border:1.5px solid "+headerBd+";border-radius:10px 10px 0 0;padding:9px 14px;display:flex;align-items:center;gap:8px;'>"
+        +"🚛 "+type
+        +(outCnt?"<span style='background:#FEE2E2;color:#991B1B;font-size:11px;padding:2px 8px;border-radius:20px;'>ออกงาน "+outCnt+"</span>":"")
+        +"<span style='margin-left:auto;background:"+headerBd+";color:"+headerCol+";font-size:11px;padding:2px 8px;border-radius:20px;'>ว่าง "+avail+"/"+gv.length+"</span>"
         +"</div>"
-        +(booked&&!isOut&&!isRepair?"<div style='font-size:11px;color:#D97706;font-weight:600;margin-bottom:4px;'>📅 นัด "+booked.driver+" เวลา "+booked.scheduledTime+"</div>":"")
-        +(reqPending&&canManage?"<div style='font-size:11px;color:#7C3AED;font-weight:600;margin-bottom:4px;'>🙋 "+reqPending.driver+" ขอใช้รถ</div>":"")
-        +"<div style='font-size:11px;color:#475569;margin-bottom:8px;'>"+statusTxt+"</div>"
-        // ปุ่ม admin
-        +(isOut&&canManage?"<button type='button' class='bs' style='width:100%;padding:6px;font-size:12px;' data-ret='"+activeLog.id+"'>✅ บันทึกเวลากลับ</button>":"")
-        +(!isOut&&!isRepair&&canManage?"<button type='button' class='bp2' style='width:100%;padding:6px;font-size:12px;margin-bottom:4px;' data-out='"+v.id+"'>🚛 ส่งออกงาน</button>":"")
-        // ปุ่ม contractor ขอใช้รถ
-        +(!isOut&&!isRepair&&me.role==="contractor"?"<button type='button' class='bw' style='width:100%;padding:6px;font-size:12px;' data-req-veh='"+v.id+"'>🙋 ขอใช้รถ</button>":"")
-        // แสดงสถานะซ่อมชัดๆ
-        +(isRepair?"<div style='background:#DBEAFE;border-radius:7px;padding:4px 8px;font-size:11px;color:#1E40AF;font-weight:700;text-align:center;'>🔧 ไม่พร้อมใช้งาน — รอซ่อมเสร็จ</div>":"")
-        // admin approve/reject request
-        +(reqPending&&canManage
-          ?"<div style='display:flex;gap:4px;margin-top:4px;'><button type='button' class='bs' style='flex:1;padding:5px;font-size:11px;' data-approve-req='"+reqPending.id+"'>✅ อนุมัติ</button><button type='button' class='bd' style='flex:1;padding:5px;font-size:11px;' data-reject-req='"+reqPending.id+"'>❌ ปฏิเสธ</button></div>"
-          :"")
-        +"</div>";
+        +"<div style='display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;padding:12px;background:#FAFAFA;border:1.5px solid "+headerBd+";border-top:none;border-radius:0 0 10px 10px;'>"
+        +cards+"</div></div>";
     }).join("");
     vehEl.querySelectorAll("[data-ret]").forEach(function(b){b.onclick=function(){openDispatchReturn(b.dataset.ret);};});
     vehEl.querySelectorAll("[data-out]").forEach(function(b){b.onclick=function(){openDispatchOut(b.dataset.out);};});
