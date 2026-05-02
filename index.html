@@ -3228,6 +3228,7 @@ if(g("do-confirm"))g("do-confirm").onclick=function(){
   var vehObj=VEHICLES.filter(function(x){return x.id===vehId;})[0];
   if(vehObj){vehObj.status="out";vehObj.currentDriver=driver;vehObj.timeOut=timeOut;vehObj.outDate=todayStr();vehObj.currentProj=proj;vehObj.timeIn="";vehObj.returnBy="";}
   console.log('[DO-CONFIRM] VEHICLES status=out driver='+driver);
+  closeMod("mod-dispatch-out");
   addTicker("✅ "+(veh.name||"")+" ออกงานแล้ว — "+driver);
   renderDispatch();
 }
@@ -3276,30 +3277,25 @@ if(g("dr-confirm"))g("dr-confirm").onclick=function(){
   var vehObj2 = VEHICLES.filter(function(x){return x.id===vId;})[0];
   if(vehObj2){vehObj2.status="available";vehObj2.timeIn=timeIn;vehObj2.returnBy=me.name;vehObj2.currentDriver="";}
   console.log("[dr-confirm] VEHICLES status=available timeIn="+timeIn);
-  var res={ok:true};
-  (function(res){
-    console.log("[dr-confirm] result:", res&&res.ok);
-    // reload VEHICLE_LOGS จาก Sheets เพื่อให้ข้อมูลตรง
-    if(USE_API){
-      fetch(API_URL+'?action=getAll&sheet=VEHICLE_LOGS&_t='+Date.now(),{redirect:'follow',cache:'no-store'})
-      .then(function(r){return r.json();})
-      .then(function(res2){
-        if(res2.ok&&res2.data&&res2.data.VEHICLE_LOGS){
-          VEHICLE_LOGS=res2.data.VEHICLE_LOGS.map(function(l2){
-            var ti=String(l2.timeIn||'');
-            if(!l2.timeIn||ti.indexOf('1899')>=0)l2.timeIn='';
-            return l2;
-          });
-          console.log("[dr-confirm] reloaded VEHICLE_LOGS:",VEHICLE_LOGS.length);
-        }
-        renderDispatch();
-      }).catch(function(){renderDispatch();});
-    } else {
-      renderDispatch();
-    }
-  });
   addTicker("✅ "+l.vehicleName+" กลับแล้ว — "+l.driver+" เวลา "+timeIn);
   closeMod("mod-dispatch-return");
+  var drBtn2=g("dr-confirm"); if(drBtn2){drBtn2.disabled=false;drBtn2.textContent="✅ บันทึกกลับ";}
+  if(USE_API){
+    fetch(API_URL+'?action=getAll&sheet=VEHICLE_LOGS&_t='+Date.now(),{redirect:'follow',cache:'no-store'})
+    .then(function(r){return r.json();})
+    .then(function(res2){
+      if(res2.ok&&res2.data&&res2.data.VEHICLE_LOGS){
+        VEHICLE_LOGS=res2.data.VEHICLE_LOGS.map(function(l2){
+          var ti=String(l2.timeIn||'');
+          if(!l2.timeIn||ti.indexOf('1899')>=0)l2.timeIn='';
+          return l2;
+        });
+      }
+      renderDispatch();
+    }).catch(function(){renderDispatch();});
+  } else {
+    renderDispatch();
+  }
 };
 
 // ── INIT ─────────────────────────────────────────────────────
