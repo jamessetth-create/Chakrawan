@@ -11,6 +11,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>จักรวาล — BUILD STORE</title>
 <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&family=Prompt:wght@700;800&family=Oswald:wght@600;700&display=swap" rel="stylesheet"/>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:'Sarabun',sans-serif;background:#F0F4F8;color:#1E293B;min-height:100vh;}
@@ -52,6 +53,23 @@ button:active{transform:scale(.97);}
 .vcard:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.12);}
 .hidden{display:none!important;}
 .mt{margin-top:14px;}
+@keyframes lightning{
+  0%,100%{box-shadow:0 0 3px 1px #FFE06666,0 0 6px 2px #FFD70066;}
+  20%{box-shadow:0 0 6px 2px #ffffff55,0 0 12px 4px #FFE56655,0 0 18px 6px #FFD70044;}
+  40%{box-shadow:0 0 3px 1px #FFD70055,0 0 5px 2px #FFA50044;}
+  60%{box-shadow:0 0 8px 3px #ffffff44,0 0 14px 5px #FFE56644,0 0 22px 7px #FFD70033;}
+  80%{box-shadow:0 0 4px 1px #FFD70055,0 0 7px 2px #FFE06644;}
+}
+@keyframes lightning-border{
+  0%,100%{outline:2px solid #FFD70044;}
+  25%{outline:2px solid #ffffff33;}
+  50%{outline:2px solid #FFA50044;}
+  75%{outline:2px solid #FFE56644;}
+}
+.badge-lightning{
+  animation:lightning 1.6s ease-in-out infinite,lightning-border 1.6s ease-in-out infinite;
+  outline-offset:2px;
+}
 </style>
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -76,19 +94,20 @@ button:active{transform:scale(.97);}
         <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:4px;">ก่อสร้างและขนส่ง — STORE MANAGEMENT</div>
       </div>
       <div style="background:#fff;border-radius:20px;padding:26px;box-shadow:0 24px 64px rgba(0,0,0,.25);">
-        <div style="font-family:'Prompt',sans-serif;font-weight:800;font-size:16px;color:#1E293B;margin-bottom:18px;">เข้าสู่ระบบ</div>
+        <div id="lg-title" style="font-family:'Prompt',sans-serif;font-weight:800;font-size:16px;color:#1E293B;margin-bottom:18px;">เข้าสู่ระบบ</div>
+        <!-- invite registration form -->
+        <div id="invite-reg" style="display:none;">
+          <div style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:12px;color:#1D4ED8;font-weight:700;">🎉 คุณได้รับเชิญเข้าระบบจักรวาล<br><span style="font-weight:400;color:#3B82F6;">กรอกชื่อ-นามสกุล และเบอร์โทรให้ครบก่อนกดยืนยัน</span></div>
+          <div><label class="lbl">ชื่อ-นามสกุล</label><input id="reg-name" type="text" placeholder="เช่น สมชาย ใจดี" autocomplete="name"/></div>
+          <div class="mt"><label class="lbl">เบอร์โทรศัพท์</label><input id="reg-phone" type="tel" placeholder="เช่น 0812345678" autocomplete="tel"/></div>
+          <div id="reg-err" class="aerr hidden" style="margin-top:10px;"></div>
+        </div>
+        <div id="liff-status" style="display:none;background:#F0FDF4;border:1px solid #86EFAC;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:#166534;word-break:break-all;"></div>
         <div id="lg-err" class="aerr hidden"></div>
-        <div><label class="lbl">USERNAME</label><input id="lg-u" type="text" placeholder="กรอก username" autocomplete="off"/></div>
-        <div class="mt"><label class="lbl">PASSWORD</label>
-          <div style="position:relative;"><input id="lg-p" type="password" placeholder="กรอก password" autocomplete="off" style="padding-right:44px;"/>
-            <button type="button" id="eye-btn" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:#94A3B8;padding:0;min-width:unset;">👁️</button>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:8px;margin-top:14px;">
-          <input type="checkbox" id="remember-me" style="width:16px;height:16px;cursor:pointer;accent-color:#1D4ED8;"/>
-          <label for="remember-me" style="font-size:13px;color:#64748B;cursor:pointer;font-family:'Sarabun',sans-serif;">จดจำรหัสผ่าน</label>
-        </div>
-        <button type="button" id="lg-btn" class="bp" style="width:100%;padding:12px;font-size:15px;border-radius:10px;margin-top:12px;">เข้าสู่ระบบ →</button>
+        <button type="button" id="lg-line-btn" style="width:100%;padding:12px;font-size:14px;border-radius:10px;margin-top:2px;background:#06C755;color:#fff;border:none;font-family:'Sarabun',sans-serif;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.02 2 11c0 4.42 3.58 8.06 8.5 8.93v2.57c0 .28.32.43.54.26L16 19.5c3.45-.87 6-3.8 6-7.5C22 6.02 17.52 2 12 2z"/></svg>
+          เข้าสู่ระบบด้วย LINE
+        </button>
 
       </div>
     </div>
@@ -400,8 +419,12 @@ button:active{transform:scale(.97);}
     <div id="tab-users" class="hidden">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;">
         <div style="font-family:'Prompt',sans-serif;font-weight:800;font-size:16px;color:#1D4ED8;">👤 จัดการผู้ใช้งาน</div>
-        <button type="button" id="btn-add-user" class="bp" style="padding:9px 14px;">+ เพิ่มผู้ใช้</button>
+        <div style="display:flex;gap:8px;">
+          <button type="button" id="btn-invite" class="bw" style="padding:9px 14px;">🔗 สร้างลิงก์เชิญ</button>
+          <button type="button" id="btn-add-user" class="bp" style="padding:9px 14px;">+ เพิ่มผู้ใช้</button>
+        </div>
       </div>
+      <div id="invite-list" style="margin-bottom:12px;"></div>
       <div id="user-list"></div>
     </div>
   </div>
@@ -445,6 +468,22 @@ button:active{transform:scale(.97);}
   </div>
 </div></div>
 
+<div class="overlay" id="mod-invite"><div class="modal" style="max-width:360px;" onclick="event.stopPropagation()">
+  <div style="font-family:'Prompt',sans-serif;font-weight:800;font-size:16px;color:#1D4ED8;margin-bottom:16px;">🔗 สร้างลิงก์เชิญ</div>
+  <div class="mt"><label class="lbl">ตำแหน่งที่จะมอบหมาย</label>
+    <select id="inv-role" style="width:100%;padding:10px 14px;border:1.5px solid #CBD5E1;border-radius:8px;font-family:'Sarabun',sans-serif;font-size:14px;">
+      <option value="staff">👷 พนักงาน</option>
+      <option value="contractor">🏢 ผู้รับเหมา</option>
+      <option value="subcontractor">🔨 ผู้รับจ้าง</option>
+      <option value="supervisor">⭐ สเมียร์</option>
+    </select>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:18px;">
+    <button type="button" id="inv-cancel" class="bg" style="flex:1;">ยกเลิก</button>
+    <button type="button" id="inv-create" class="bp" style="flex:2;">สร้างลิงก์ →</button>
+  </div>
+</div></div>
+
 <div class="overlay" id="mod-user"><div class="modal" onclick="event.stopPropagation()">
   <div id="user-modal-title" style="font-family:'Prompt',sans-serif;font-weight:800;font-size:16px;color:#1D4ED8;margin-bottom:16px;"></div>
   <div id="user-err" class="aerr hidden"></div>
@@ -456,7 +495,11 @@ button:active{transform:scale(.97);}
     </div>
   </div>
   <div class="mt"><label class="lbl">บทบาท</label>
-    <select id="u-role"><option value="manager">🔑 ผู้จัดการ</option><option value="supervisor">⭐ หัวหน้างาน</option><option value="staff">👷 พนักงาน</option><option value="contractor">🏢 ผู้รับเหมา</option></select>
+    <select id="u-role"><option value="admin">🔑 ผู้ดูแลระบบ</option><option value="supervisor">⭐ สเมียร์</option><option value="staff">👷 พนักงาน</option><option value="contractor">🏢 ผู้รับเหมา</option><option value="subcontractor">🔨 ผู้รับจ้าง</option></select>
+  </div>
+  <div class="mt"><label class="lbl">LINE User ID <span style="font-weight:400;color:#94A3B8;font-size:11px;">(สำหรับผูกบัญชี LINE)</span></label>
+    <input id="u-line-id" type="text" placeholder="Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" autocomplete="off"/>
+    <div style="font-size:11px;color:#94A3B8;margin-top:4px;">พนักงานส่ง LINE User ID มาให้ admin แล้วกรอกที่นี่</div>
   </div>
   <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:18px;">
     <button type="button" class="bg" id="user-cancel">ยกเลิก</button>
@@ -739,7 +782,10 @@ button:active{transform:scale(.97);}
 <div class="overlay" id="mod-dispatch-out"><div class="modal" style="width:460px;" onclick="event.stopPropagation()">
   <div style="font-family:'Prompt',sans-serif;font-weight:800;font-size:16px;color:#7C3AED;margin-bottom:16px;">🚛 ส่งรถออกงาน</div>
   <div id="dispatch-err" class="aerr hidden"></div>
-  <div><label class="lbl">รถ / เครื่องจักร *</label><select id="do-veh-sel"></select></div>
+  <div id="do-veh-dropdown-wrap"><label class="lbl">รถ / เครื่องจักร *</label><select id="do-veh-sel"></select></div>
+  <div id="do-veh-locked-wrap" class="hidden"><label class="lbl">รถ / เครื่องจักร</label>
+    <div id="do-veh-locked" style="background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:8px;padding:10px 14px;font-weight:700;color:#1D4ED8;font-size:14px;"></div>
+  </div>
   <div class="mt"><label class="lbl">คนขับ *</label>
     <select id="do-driver-sel" style="margin-bottom:6px;"></select>
     <input id="do-driver-other" type="text" placeholder="หรือพิมพ์ชื่อคนขับ..." autocomplete="off" style="margin-top:6px;font-size:13px;"/>
@@ -889,12 +935,39 @@ try{
 // API CONFIG — ใส่ URL ของ Google Apps Script ที่นี่
 // ══════════════════════════════════════════════════════════════
 var API_URL = 'https://script.google.com/macros/s/AKfycby9g6Hf9hSJFrgH60MOFiaTcg3g9oikUGv4sMevfPJLUD9eYnF4dFozME9iqyt5Q_sBHQ/exec'; // ← วาง Web App URL ตรงนี้ เช่น https://script.google.com/macros/s/xxx/exec
+var LIFF_ID = '2009899539-vYee7Kpx';
+var WEB_URL = 'https://chakrawan-9cadc.web.app';
+// capture invite code from URL and show registration form
+(function(){
+  try{
+    var inv=new URLSearchParams(window.location.search).get('invite');
+    if(inv){
+      localStorage.setItem('chakrawan_invite',inv);
+      // show invite registration form on login page
+      window.addEventListener('DOMContentLoaded',function(){
+        var reg=document.getElementById('invite-reg');
+        var norm=document.getElementById('normal-login-fields');
+        var lgBtn=document.getElementById('lg-btn');
+        var title=document.getElementById('lg-title');
+        var divider=document.getElementById('lg-divider');
+        var lineBtn=document.getElementById('lg-line-btn');
+        if(reg){reg.style.display='block';}
+        if(norm){norm.style.display='none';}
+        if(lgBtn){lgBtn.style.display='none';}
+        if(divider){divider.style.display='none';}
+        if(title){title.textContent='สมัครเข้าใช้งาน';}
+        if(lineBtn){lineBtn.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.02 2 11c0 4.42 3.58 8.06 8.5 8.93v2.57c0 .28.32.43.54.26L16 19.5c3.45-.87 6-3.8 6-7.5C22 6.02 17.52 2 12 2z"/></svg> ยืนยันการสมัครด้วย LINE';}
+      });
+    }
+  }catch(e){}
+})();
 // ── Firebase Config ──────────────────────────────────────────────────
 var FB_CONFIG={apiKey:"AIzaSyD9ii1TyiwqEKiuNrKfMGKjYOSdd2i2_Tw",authDomain:"chakrawan-9cadc.firebaseapp.com",databaseURL:"https://chakrawan-9cadc-default-rtdb.asia-southeast1.firebasedatabase.app",projectId:"chakrawan-9cadc",storageBucket:"chakrawan-9cadc.firebasestorage.app",messagingSenderId:"1834196657",appId:"1:1834196657:web:97b48809dff913c2968c90"};
 var fbApp=null,fbDb=null,USE_FIREBASE=false;
 try{fbApp=firebase.initializeApp(FB_CONFIG);fbDb=firebase.database();USE_FIREBASE=true;console.log('[Firebase] initialized ✅');}catch(e){console.warn('[Firebase] init failed:',e.message);}
 function fbSave(sheet,obj){if(!USE_FIREBASE)return;fbDb.ref(sheet+'/'+obj.id).set(obj).catch(function(e){console.error('[FB] save error:',e.message);});}
 function fbUpdate(sheet,id,data){if(!USE_FIREBASE)return;fbDb.ref(sheet+'/'+id).update(data).catch(function(e){console.error('[FB] update error:',e.message);});}
+function fbDelete(sheet,id){if(!USE_FIREBASE)return;fbDb.ref(sheet+'/'+id).remove().catch(function(e){console.error('[FB] delete error:',e.message);});}
 function fbListen(sheet,arr,cb){if(!USE_FIREBASE)return;fbDb.ref(sheet).on('value',function(snap){var d=snap.val()||{};var a=Object.values(d).filter(function(x){return x&&x.id;});arr.length=0;a.forEach(function(x){arr.push(x);});console.log('[FB] '+sheet+' updated: '+arr.length+' records');if(cb)cb();});}
 var USE_API=!!API_URL; // true = ใช้ Sheets, false = ใช้ memory (demo mode)
 var apiQueue = [], apiBusy = false;
@@ -1009,7 +1082,7 @@ function uploadImageToDrive(base64DataUrl, filename, cb) {
   }
 }
 function apiUpdate(sheet,id,obj,cb){fbUpdate(sheet,id,obj);apiCall('update',sheet,obj,id,cb);}
-function apiDelete(sheet, id, cb)       { apiCall('delete', sheet, null, id,   cb); }
+function apiDelete(sheet, id, cb)       { fbDelete(sheet, id); apiCall('delete', sheet, null, id, cb); }
 
 // ── Load all data from Sheets ─────────────────────────────────
 function loadFromSheets(onDone) {
@@ -1185,10 +1258,11 @@ var NOTIFS=[];
 
 // ─── CONSTANTS ────────────────────────────────────────────────────────
 var ROLE={
-  manager:    {label:"ผู้จัดการ",  icon:"🔑",color:"#1D4ED8"},
-  supervisor: {label:"หัวหน้างาน", icon:"⭐",color:"#7C3AED"},
-  staff:      {label:"พนักงาน",    icon:"👷",color:"#059669"},
-  contractor: {label:"ผู้รับเหมา", icon:"🏢",color:"#D97706"},
+  admin:       {label:"ผู้ดูแลระบบ", icon:"👑",color:"#B8860B"},
+  supervisor:  {label:"สเมียร์",     icon:"⭐",color:"#7C3AED"},
+  staff:       {label:"พนักงาน",     icon:"👷",color:"#059669"},
+  contractor:  {label:"ผู้รับเหมา",  icon:"🏢",color:"#D97706"},
+  subcontractor:{label:"ผู้รับจ้าง", icon:"🔨",color:"#B45309"},
 };
 var CC=[["#FEF3C7","#92400E"],["#DBEAFE","#1E40AF"],["#DCFCE7","#166534"],["#FEE2E2","#991B1B"],["#EDE9FE","#5B21B6"],["#FFF7ED","#9A3412"]];
 var IST={ok:{label:"ปกติ",c:"#166534",bg:"#DCFCE7",bd:"#86EFAC",icon:"✅"},repair:{label:"กำลังซ่อม",c:"#92400E",bg:"#FEF3C7",bd:"#FDE68A",icon:"🔧"}};
@@ -1219,8 +1293,16 @@ function nowTimeStr(){return new Date().toTimeString().slice(0,5);}
 function fmtDT(d){if(!d)return"-";var dt=new Date(d);return dt.getDate()+" "+MTH[dt.getMonth()]+" "+(dt.getFullYear()+543)+" "+String(dt.getHours()).padStart(2,"0")+":"+String(dt.getMinutes()).padStart(2,"0");}
 function catClr(c){var i=CATS.indexOf(c);if(i<0)i=0;return CC[i%CC.length];}
 function can(role,act){
-  var P={manageStock:["manager","supervisor"],manageUsers:["manager"],manageCats:["manager","supervisor"],manageProjs:["manager","supervisor"],approveReq:["manager","supervisor"],verifyRepair:["manager","supervisor"]};
-  return(P[act]||["manager","supervisor","staff","contractor"]).indexOf(role)>-1;
+  if(role==="admin") return true;
+  var P={
+    manageUsers: ["supervisor"],
+    manageStock: ["supervisor"],
+    manageCats:  ["supervisor"],
+    manageProjs: ["supervisor"],
+    approveReq:  ["supervisor"],
+    verifyRepair:["supervisor"],
+  };
+  return(P[act]||["supervisor","staff","contractor","subcontractor"]).indexOf(role)>-1;
 }
 function pReqCnt(){return REQS.filter(function(r){return r.status==="pending";}).length;}
 function pRepCnt(){return REPAIRS.filter(function(r){return r.status==="pending";}).length;}
@@ -1236,6 +1318,14 @@ document.querySelectorAll(".overlay").forEach(function(el){el.addEventListener("
 
 // ─── TICKER ───────────────────────────────────────────────────────────
 var tickerQ=[],tickerBusy=false,tickerHistory=[];
+function fallbackCopy(text,btn){
+  var ta=document.createElement('textarea');
+  ta.value=text;ta.style.position='fixed';ta.style.opacity='0';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');}catch(e){}
+  document.body.removeChild(ta);
+  if(btn){btn.textContent='✅';setTimeout(function(){btn.textContent='📋 copy';},1500);}
+}
 function addTicker(msg){
   if(tickerHistory.indexOf(msg)<0)tickerHistory.push(msg);
   if(tickerHistory.length>8)tickerHistory.shift();
@@ -1274,9 +1364,37 @@ function checkAutoAlerts(){
 }
 
 // ─── NOTIF ────────────────────────────────────────────────────────────
+var LINE_BOT_URL = 'https://chakrawan-line-bot.onrender.com';
+
+// keep Render awake — ping every 14 min when app is open
+function startRenderPing(){
+  setInterval(function(){fetch(LINE_BOT_URL+'/').catch(function(){});},14*60*1000);
+}
+
+function linePush(lineUserId,msg){
+  var now=new Date();
+  var stamp='\n📅 '+now.toLocaleDateString('th-TH',{day:'2-digit',month:'2-digit',year:'numeric'})+' '+now.toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});
+  fetch(LINE_BOT_URL+'/push',{
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({lineUserId:lineUserId,message:msg+stamp})
+  }).catch(function(e){
+    // Render was sleeping — retry once after 35s (cold start time)
+    setTimeout(function(){
+      fetch(LINE_BOT_URL+'/push',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({lineUserId:lineUserId,message:msg})
+      }).catch(function(){});
+    },35000);
+  });
+}
+
 function sendNotif(toId,msg,tab){
   NOTIFS.unshift({id:uid(),toId:toId,msg:msg,ts:new Date().toISOString(),read:false,tab:tab||null});
   if(me&&me.id===toId)updateBell();
+  var target=USERS.filter(function(u){return u.id===toId;})[0];
+  if(target&&target.lineUserId) linePush(target.lineUserId,msg);
 }
 function updateBell(){
   if(!me)return;
@@ -1380,7 +1498,92 @@ function doLogin(){
 }
 
 
+var PENDING_EXPIRE_DAYS = 7;
+function cleanExpiredPending(){
+  if(!can(me&&me.role,'manageUsers'))return;
+  var cutoff=Date.now()-PENDING_EXPIRE_DAYS*24*60*60*1000;
+  USERS.filter(function(u){return u.pending&&!u.active&&u.createdAt&&new Date(u.createdAt).getTime()<cutoff;}).forEach(function(u){
+    fbDb.ref('USERS/'+u.id).remove();
+    if(u.lineUserId){
+      fetch(LINE_BOT_URL+'/push',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({lineUserId:u.lineUserId,message:'❌ คำขอเข้าใช้งานระบบหมดอายุแล้ว ('+PENDING_EXPIRE_DAYS+' วัน) กรุณาติดต่อ Admin โดยตรง'})
+      }).catch(function(){});
+    }
+  });
+}
+function autoRegisterLine(profile,btn){
+  var lineId=profile.userId, displayName=profile.displayName||'ผู้ใช้ LINE';
+  var resetBtn=function(){if(btn){btn.disabled=false;btn.innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.02 2 11c0 4.42 3.58 8.06 8.5 8.93v2.57c0 .28.32.43.54.26L16 19.5c3.45-.87 6-3.8 6-7.5C22 6.02 17.52 2 12 2z"/></svg> เข้าสู่ระบบด้วย LINE';}};
+  var showNoInvite=function(){
+    var box=document.getElementById('liff-status');
+    if(box){box.style.display='block';box.style.background='#FEF2F2';box.style.borderColor='#FCA5A5';box.style.color='#991B1B';
+      box.innerHTML='🔒 <b>ต้องรับเชิญจาก Admin เท่านั้น</b><br><small>กรุณาขอลิงก์เชิญจากผู้ดูแลระบบ</small>';}
+    resetBtn();
+  };
+
+  // check if already pending
+  fbDb.ref('USERS').orderByChild('lineUserId').equalTo(lineId).once('value').then(function(snap){
+    if(snap.val()){showLineWaiting(displayName);resetBtn();return;}
+
+    // require valid invite
+    var invCode=null;try{invCode=localStorage.getItem('chakrawan_invite');}catch(e){}
+    if(!invCode){showNoInvite();return;}
+
+    fbDb.ref('INVITES/'+invCode).once('value').then(function(iSnap){
+      var inv=iSnap.val();
+      if(!inv||new Date(inv.expiresAt)<new Date()||inv.uses>=(inv.maxUses||1)){
+        try{localStorage.removeItem('chakrawan_invite');}catch(e){}
+        showNoInvite();return;
+      }
+      // valid invite — create active user immediately and burn invite
+      var regName=displayName,regPhone='';
+      try{regName=sessionStorage.getItem('reg_name')||displayName;regPhone=sessionStorage.getItem('reg_phone')||'';}catch(e){}
+      try{sessionStorage.removeItem('reg_name');sessionStorage.removeItem('reg_phone');}catch(e){}
+      var newU={id:uid(),name:regName,phone:regPhone,username:'line_'+lineId.slice(-6),password:uid(),role:inv.role||'staff',lineUserId:lineId,active:true,pending:false,inviteCode:invCode,createdAt:new Date().toISOString()};
+      apiSave('USERS',newU);
+      USERS.push(newU);
+      // burn invite — delete so it cannot be reused
+      fbDb.ref('INVITES/'+invCode).remove();
+      try{localStorage.removeItem('chakrawan_invite');}catch(e){}
+      // auto-login immediately
+      loginAs(newU);
+    });
+  });
+}
+function showLineWaiting(name){
+  var box=document.getElementById('liff-status');
+  if(box){box.style.display='block';box.style.background='#FFF7ED';box.style.borderColor='#FED7AA';box.style.color='#92400E';
+    box.innerHTML='⏳ <b>'+name+'</b><br>ส่งคำขอเข้าระบบแล้ว รอ Admin อนุมัติ<br><small>เมื่อได้รับการอนุมัติแล้วกด "เข้าสู่ระบบด้วย LINE" อีกครั้ง</small>';}
+}
+function tryLiffLogin(cb){
+  if(!LIFF_ID||typeof liff==='undefined'){cb(false);return;}
+  liff.init({liffId:LIFF_ID}).then(function(){
+    var inClient=liff.isInClient(),loggedIn=liff.isLoggedIn();
+    if(!inClient&&!loggedIn){cb(false);return;}
+    liff.getProfile().then(function(profile){
+      var lineId=profile.userId;
+      try{sessionStorage.setItem('liff_line_id',lineId);}catch(e){}
+      fbDb.ref('USERS').once('value').then(function(snap){
+        var all=Object.values(snap.val()||{}).filter(function(x){return x&&x.id;});
+        var found=all.filter(function(u){return u.lineUserId===lineId&&(u.active===true||u.active==="TRUE"||u.active===1);})[0];
+        if(found){loginAs(found);cb(true);}
+        else{
+          // auto-register pending account from LIFF profile
+          liff.getProfile().then(function(prof){autoRegisterLine(prof,null);}).catch(function(){});
+          cb(false);
+        }
+      }).catch(function(){cb(false);});
+    }).catch(function(){cb(false);});
+  }).catch(function(){cb(false);});
+}
 function loginAs(u){
+  // auto-link LINE account if opened via LIFF
+  var liffId=null;try{liffId=sessionStorage.getItem('liff_line_id');}catch(e){}
+  if(liffId&&u.lineUserId!==liffId){
+    u.lineUserId=liffId;
+    fbUpdate('USERS',u.id,{lineUserId:liffId});
+    setTimeout(function(){addTicker('🟢 ผูกบัญชี LINE สำเร็จ');},1000);
+  }
   me=u;
   var sessData=JSON.stringify({id:u.id,username:u.username,pw:u.password,ts:Date.now()});
   try{
@@ -1396,14 +1599,23 @@ function loginAs(u){
   startPresence(u);
   window.migrateToFirebase=migrateToFirebase;window.VEHICLES=VEHICLES;window.DRIVERS=DRIVERS;
   g("hdr-name").textContent=u.name;
-  g("hdr-role").innerHTML="<span class='tag' style='background:"+ROLE[u.role].color+"25;color:"+ROLE[u.role].color+";font-size:10px;'>"+ROLE[u.role].icon+" "+ROLE[u.role].label+"</span>";
+  var isAdmin=u.role==="admin";
+  var badgeBg=isAdmin?"linear-gradient(135deg,#F5C842 0%,#B8860B 60%,#8B6508 100%)":ROLE[u.role].color;
+  var badgeStyle="font-size:10px;font-weight:700;color:#fff;padding:3px 8px;border-radius:99px;"+(isAdmin?"background:"+badgeBg+";letter-spacing:.3px;":"background:"+badgeBg+";");
+  g("hdr-role").innerHTML="<span class='tag"+(isAdmin?" badge-lightning":"")+"' style='"+badgeStyle+"'>"+ROLE[u.role].icon+" "+ROLE[u.role].label+"</span>";
   g("app-approver").value=u.name;g("req-date").value=todayStr();
   if(!can(u.role,"manageStock"))hide("btn-add-item");
   if(!can(u.role,"manageCats"))hide("btn-manage-cat");
   buildTabs();buildProjSel();buildItemSel();buildRrSels();
-  switchTab("stock");updateBell();
+  var hashTab=window.location.hash.replace('#','');
+  var tabParam=new URLSearchParams(window.location.search).get('tab')||'';
+  var validTabs=["stock","request","repair","vehicles","projects","dispatch","history","report","dashboard","users"];
+  var initTab=validTabs.indexOf(hashTab)>=0?hashTab:validTabs.indexOf(tabParam)>=0?tabParam:"stock";
+  switchTab(initTab);
+  updateBell();
   setTimeout(checkAutoAlerts,800);
   setInterval(function(){if(me)renderDispatch();},60000);
+  startRenderPing();
 }
 function logout(){
   if(me&&USE_FIREBASE){try{fbDb.ref('presence/'+me.id).remove();}catch(e){}}
@@ -1412,11 +1624,6 @@ function logout(){
   var ind=g("online-indicator");if(ind)ind.style.display="none";
   try{localStorage.removeItem("chakrawan_session");sessionStorage.removeItem("chakrawan_session");}catch(e){}
   hide("pg-app");show("pg-login");
-  try{
-    var saved=localStorage.getItem("chakrawan_u");
-    if(!saved){g("lg-u").value="";g("lg-p").value="";}
-    else{var rem=g("remember-me");if(rem)rem.checked=true;}
-  }catch(e){g("lg-u").value="";g("lg-p").value="";}
   hide("lg-err");
   g("notif-panel").style.display="none";
   show("btn-add-item");show("btn-manage-cat");
@@ -1463,17 +1670,43 @@ function checkRemembered(){
   }catch(e){}
 }
 
-g("lg-btn").onclick=doLogin;
-g("lg-u").onkeydown=function(e){if(e.key==="Enter")doLogin();};
-g("lg-p").onkeydown=function(e){if(e.key==="Enter")doLogin();};
 g("logout-btn").onclick=logout;
-g("eye-btn").onclick=function(){var i=g("lg-p");i.type=i.type==="password"?"text":"password";g("eye-btn").textContent=i.type==="password"?"👁️":"🙈";};
+g("lg-line-btn").onclick=function(){
+  if(!LIFF_ID||typeof liff==='undefined'){g("lg-err").textContent="⚠️ LIFF ไม่พร้อมใช้งาน";show("lg-err");return;}
+  // validate registration fields if invite mode
+  var invCode=null;try{invCode=localStorage.getItem('chakrawan_invite');}catch(e){}
+  if(invCode){
+    var name=g("reg-name")?g("reg-name").value.trim():'';
+    var phone=g("reg-phone")?g("reg-phone").value.trim():'';
+    var rerr=g("reg-err");
+    if(!name||!phone){if(rerr){rerr.textContent="⚠️ กรุณากรอกชื่อและเบอร์โทรให้ครบ";show("reg-err");}return;}
+    try{sessionStorage.setItem('reg_name',name);sessionStorage.setItem('reg_phone',phone);}catch(e){}
+  }
+  var btn=g("lg-line-btn");btn.disabled=true;btn.textContent="กำลังเชื่อมต่อ LINE...";
+  liff.init({liffId:LIFF_ID}).then(function(){
+    if(liff.isLoggedIn()){
+      // already logged in — try to match user
+      liff.getProfile().then(function(profile){
+        var lineId=profile.userId;
+        try{sessionStorage.setItem('liff_line_id',lineId);}catch(e){}
+        fbDb.ref('USERS').once('value').then(function(snap){
+          var all=Object.values(snap.val()||{}).filter(function(x){return x&&x.id;});
+          var found=all.filter(function(u){return u.lineUserId===lineId&&(u.active===true||u.active==="TRUE"||u.active===1);})[0];
+          if(found){loginAs(found);}
+          else{autoRegisterLine(profile,btn);}
+        }).catch(function(){btn.disabled=false;btn.textContent="เข้าสู่ระบบด้วย LINE";});
+      });
+    } else {
+      liff.login(); // redirect to LINE OAuth
+    }
+  }).catch(function(e){g("lg-err").textContent="⚠️ LINE error: "+e.message;show("lg-err");btn.disabled=false;btn.textContent="เข้าสู่ระบบด้วย LINE";});
+};
 g("u-eye").onclick=function(){var i=g("u-password");i.type=i.type==="password"?"text":"password";};
 
 // ─── TABS ─────────────────────────────────────────────────────────────
 function buildTabs(){
   var bar=g("tab-bar");bar.innerHTML="";
-  var tabs=[{k:"stock",l:"📦 คลัง"},{k:"request",l:can(me.role,"approveReq")?"📋 คำขอเบิก":"📋 ขอเบิก"},{k:"repair",l:"📢 แจ้งซ่อม"},{k:"vehicles",l:"🚛 รถ/เครื่องจักร"},{k:"projects",l:"🏗 โครงการ"},{k:"history",l:"📊 ประวัติ"},{k:"dispatch",l:"🚛 เรียกใช้รถ"}];
+  var tabs=[{k:"stock",l:"📦 คลัง"},{k:"request",l:can(me.role,"approveReq")?"📋 คำขอเบิก":"📋 ขอเบิก"},{k:"dispatch",l:"🚛 เรียกใช้รถ"},{k:"vehicles",l:"🚛 รถ/เครื่องจักร"},{k:"projects",l:"🏗 โครงการ"},{k:"repair",l:"📢 แจ้งซ่อม"},{k:"history",l:"📊 ประวัติ"}];
   if(can(me.role,"approveReq")){var ic=irCnt();tabs.push({k:"report",l:"📢 รายงาน",cnt:ic});}
   if(can(me.role,"approveReq"))tabs.push({k:"dashboard",l:"📈 Dashboard"});
   if(can(me.role,"manageUsers"))tabs.push({k:"users",l:"👤 User"});
@@ -1499,7 +1732,7 @@ function switchTab(k){
   if(k==="dispatch")  renderDispatch();
   if(k==="report")   renderItemReports();
   if(k==="dashboard")renderDashboard();
-  if(k==="users")    renderUsers();
+  if(k==="users")    {renderUsers();renderInvites();}
 }
 
 // ─── STATS ────────────────────────────────────────────────────────────
@@ -1752,7 +1985,7 @@ g("ir-submit").onclick=function(){
   var rMap={not_found:"ในคลังไม่มีสินค้าตามที่แสดง",damaged:"สินค้าเสียหาย / ใช้ไม่ได้",mismatch:"จำนวนไม่ตรงกับในระบบ",other:"อื่นๆ"};
   var reason=rMap[g("ir-reason").value]||"อื่นๆ";
   var newIR={id:uid(),itemId:it.id,itemName:it.name,reason:reason,detail:detail,reportBy:me.name,reportId:me.id,ts:new Date().toISOString(),status:"pending"};ITEM_REPORTS.unshift(newIR);apiSave('ITEM_REPORTS',newIR);
-  USERS.filter(function(u){return(u.role==="manager"||u.role==="supervisor")&&u.active;}).forEach(function(u){sendNotif(u.id,"⚠️ "+me.name+" แจ้งเหตุ: "+it.name+" — "+reason,"report");});
+  USERS.filter(function(u){return(u.role==="admin"||u.role==="supervisor")&&u.active;}).forEach(function(u){sendNotif(u.id,"⚠️ "+me.name+" แจ้งเหตุ: "+it.name+" — "+reason,"report");});
   closeMod("mod-item-report");alert("✅ ส่งรายงานแล้ว Admin จะดำเนินการ");buildTabs();
 };
 
@@ -1799,7 +2032,7 @@ g("req-submit").onclick=function(){
   if(!it||qty<=0){g("req-err").textContent="⚠️ จำนวนไม่ถูกต้อง";show("req-err");return;}
   if(qty>it.qty){g("req-err").textContent="⚠️ ของในคลังมีเพียง "+it.qty+" "+it.unit;show("req-err");return;}
   var newReq={id:uid(),itemId:it.id,itemName:it.name,qty:qty,unit:it.unit,proj:proj,reqName:me.name,reqId:me.id,date:date,note:note,status:"pending",createdAt:new Date().toISOString()};REQS.unshift(newReq);apiSave('REQS',newReq);
-  USERS.filter(function(u){return(u.role==="manager"||u.role==="supervisor")&&u.active;}).forEach(function(u){sendNotif(u.id,"📋 "+me.name+" ขอเบิก "+it.name+" "+qty+" "+it.unit,"request");});
+  USERS.filter(function(u){return(u.role==="admin"||u.role==="supervisor")&&u.active;}).forEach(function(u){sendNotif(u.id,"📋 "+me.name+" ขอเบิก "+it.name+" "+qty+" "+it.unit,"request");});
   g("req-item-sel").value="";g("req-qty").value="";g("req-note").value="";g("req-hint").textContent="";
   g("req-proj-sel").value="";hide("req-proj-other-wrap");g("req-proj-other").value="";
   show("req-ok");setTimeout(function(){hide("req-ok");},3000);
@@ -1898,7 +2131,7 @@ g("rr-save").onclick=function(){
   else{itemId=g("rr-veh-sel").value;var vt=VEHICLES.filter(function(v){return v.id===itemId;})[0];if(!vt){g("rr-err").textContent="⚠️ กรุณาเลือกรถ/เครื่องจักร";show("rr-err");return;}if(vt.status==="repair"||vt.status==="broken"){g("rr-err").textContent="⚠️ รถนี้กำลังซ่อมอยู่ ไม่สามารถแจ้งซ่อมซ้ำได้";show("rr-err");return;}var dupRep=REPAIRS.filter(function(r){return r.type==="vehicle"&&r.itemId===itemId&&(r.status==="pending"||r.status==="verified_repair");}).length;if(dupRep>0){g("rr-err").textContent="⚠️ มีการแจ้งซ่อมรถนี้อยู่แล้ว";show("rr-err");return;}itemName=vt.name+(vt.plate?" ["+vt.plate+"]":"");}
   if(!desc){g("rr-err").textContent="⚠️ กรุณาระบุอาการ";show("rr-err");return;}
   var newRep={id:uid(),type:rtype,itemId:itemId,itemName:itemName,desc:desc,priority:pri,reqName:me.name,reqId:me.id,date:new Date().toISOString(),status:"pending",adminNote:"",verifiedBy:"",doneBy:"",doneAt:""};REPAIRS.unshift(newRep);apiSave('REPAIRS',newRep);
-  USERS.filter(function(u){return(u.role==="manager"||u.role==="supervisor")&&u.active;}).forEach(function(u){sendNotif(u.id,"📢 "+me.name+" แจ้งซ่อม "+itemName,"repair");});
+  USERS.filter(function(u){return(u.role==="admin"||u.role==="supervisor")&&u.active;}).forEach(function(u){sendNotif(u.id,"📢 "+me.name+" แจ้งซ่อม "+itemName,"repair");});
   g("rr-desc").value="";g("rr-priority").value="low";
   closeMod("mod-repair-form");renderRepairList();renderStats();buildTabs();
 };
@@ -2683,25 +2916,74 @@ function renderProjects(){
 
 // ─── USERS ────────────────────────────────────────────────────────────
 if(g("btn-add-user"))g("btn-add-user").onclick=function(){openUserModal(null);};
+
+// ─── INVITES ──────────────────────────────────────────────────────────
+function renderInvites(){
+  var el=g("invite-list");if(!el)return;
+  fbDb.ref('INVITES').once('value').then(function(snap){
+    var invites=Object.values(snap.val()||{}).filter(function(x){return x&&x.code;});
+    var active=invites.filter(function(i){return new Date(i.expiresAt)>new Date()&&(i.uses||0)<(i.maxUses||1);});
+    if(!active.length){el.innerHTML='';return;}
+    el.innerHTML="<div style='background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;padding:10px 12px;'>"
+      +"<div style='font-size:11px;font-weight:700;color:#92400E;margin-bottom:8px;'>🔗 ลิงก์เชิญที่ใช้งานอยู่</div>"
+      +active.map(function(i){
+        var link=WEB_URL+'?invite='+i.code;
+        var exp=new Date(i.expiresAt);
+        var minsLeft=Math.ceil((exp-new Date())/60000);
+        var timeLeft=minsLeft>0?minsLeft+'น.':'หมดอายุ';
+        return "<div style='display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;'>"
+          +"<input type='text' value='"+link+"' readonly style='flex:1;font-size:11px;padding:5px 8px;background:#fff;color:#374151;min-width:0;'/>"
+          +"<span style='font-size:10px;color:#92400E;white-space:nowrap;'>"+(i.role||'staff')+" · "+timeLeft+"</span>"
+          +"<button type='button' class='bg' style='font-size:11px;padding:4px 8px;' data-copy-link='"+link+"' onclick='(function(b){var url=b.dataset.copyLink;if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(function(){b.textContent=\"✅\";setTimeout(function(){b.textContent=\"📋 copy\";},1500);}).catch(function(){fallbackCopy(url,b);});}else{fallbackCopy(url,b);}})(this);'>📋 copy</button>"
+          +"<button type='button' class='bd' style='font-size:11px;padding:4px 8px;' data-del-inv='"+i.code+"'>🗑️</button>"
+          +"</div>";
+      }).join('')
+      +"</div>";
+    el.querySelectorAll("[data-del-inv]").forEach(function(b){
+      b.onclick=function(){fbDb.ref('INVITES/'+b.dataset.delInv).remove().then(renderInvites);};
+    });
+  });
+}
+if(g("btn-invite"))g("btn-invite").onclick=function(){openMod("mod-invite");};
+if(g("inv-cancel"))g("inv-cancel").onclick=function(){closeMod("mod-invite");};
+if(g("inv-create"))g("inv-create").onclick=function(){
+  var role=g("inv-role").value;
+  var code=Math.random().toString(36).slice(2,10).toUpperCase();
+  var exp=new Date(Date.now()+10*60*1000).toISOString();
+  var createBtn=g("inv-create");createBtn.disabled=true;createBtn.textContent='⏳...';
+  fbDb.ref('INVITES/'+code).set({code:code,role:role,createdBy:me.id,createdAt:new Date().toISOString(),expiresAt:exp,maxUses:1,uses:0}).then(function(){
+    var link=WEB_URL+'?invite='+code;
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(link).catch(function(){});
+      }
+    }catch(e){}
+    closeMod("mod-invite");
+    createBtn.disabled=false;createBtn.textContent='สร้างลิงก์ →';
+    var invBtn=g("btn-invite");
+    if(invBtn){invBtn.textContent='✅ Link copied!';setTimeout(function(){invBtn.innerHTML='🔗 สร้างลิงก์เชิญ';},2500);}
+    renderInvites();
+  }).catch(function(){createBtn.disabled=false;createBtn.textContent='สร้างลิงก์ →';});
+};
 function openUserModal(id){
   editUserId=id;var u=id?USERS.filter(function(x){return x.id===id;})[0]:null;
   g("user-modal-title").textContent=u?"✏️ แก้ไขผู้ใช้":"➕ เพิ่มผู้ใช้งาน";
   g("user-save").textContent=u?"บันทึก":"เพิ่มผู้ใช้";
-  g("u-name").value=u?u.name:"";g("u-username").value=u?u.username:"";g("u-password").value=u?u.password:"";g("u-role").value=u?u.role:"staff";
+  g("u-name").value=u?u.name:"";g("u-username").value=u?u.username:"";g("u-password").value=u?u.password:"";g("u-role").value=u?u.role:"staff";g("u-line-id").value=u?u.lineUserId||"":("")
   hide("user-err");openMod("mod-user");
 }
 g("user-cancel").onclick=function(){closeMod("mod-user");};
 g("user-save").onclick=function(){
-  var name=g("u-name").value.trim(),uname=g("u-username").value.trim(),pass=g("u-password").value.trim(),role=g("u-role").value;
+  var name=g("u-name").value.trim(),uname=g("u-username").value.trim(),pass=g("u-password").value.trim(),role=g("u-role").value,lineId=g("u-line-id").value.trim();
   hide("user-err");
   if(!name||!uname||!pass){g("user-err").textContent="⚠️ กรุณากรอกข้อมูลให้ครบ";show("user-err");return;}
   var dup=USERS.filter(function(u){return u.username===uname&&u.id!==editUserId;})[0];
   if(dup){g("user-err").textContent="⚠️ Username นี้มีอยู่แล้ว";show("user-err");return;}
   if(editUserId){
     var u=USERS.filter(function(x){return x.id===editUserId;})[0];
-    if(u){u.name=name;u.username=uname;u.password=pass;u.role=role;apiUpdate("USERS",u.id,u);}
+    if(u){u.name=name;u.username=uname;u.password=pass;u.role=role;u.lineUserId=lineId;apiUpdate("USERS",u.id,u);}
   }else{
-    var newU={id:uid(),name:name,username:uname,password:pass,role:role,active:true};
+    var newU={id:uid(),name:name,username:uname,password:pass,role:role,lineUserId:lineId,active:true};
     USERS.push(newU);
     apiSave("USERS",newU);
   }
@@ -2710,11 +2992,32 @@ g("user-save").onclick=function(){
 function renderUsers(){
   if(!me||!can(me.role,"manageUsers"))return;
   var el=g("user-list");if(!el)return;
-  el.innerHTML=USERS.map(function(u){
+  var pending=USERS.filter(function(u){return u.pending&&!u.active;});
+  var active=USERS.filter(function(u){return !u.pending||u.active;});
+  var html='';
+  if(pending.length){
+    html+="<div style='font-size:12px;font-weight:700;color:#92400E;background:#FFF7ED;border:1px solid #FED7AA;border-radius:8px;padding:8px 12px;margin-bottom:10px;'>⏳ รอการอนุมัติ ("+pending.length+" คน)</div>";
+    html+=pending.map(function(u){
+      return "<div class='card' style='padding:11px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px;border:2px solid #FED7AA;'>"
+        +"<div style='width:38px;height:38px;background:#FFF7ED;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;'>⏳</div>"
+        +"<div style='flex:1;min-width:130px;'><div style='font-weight:700;font-size:13px;color:#1E293B;'>"+u.name+"</div>"
+        +"<div style='font-size:10px;color:#06C755;font-weight:700;margin-top:2px;'>🟢 LINE linked</div>"
+        +(u.phone?"<div style='font-size:11px;color:#374151;margin-top:1px;'>📱 "+u.phone+"</div>":"")
+        +"<div style='font-size:10px;color:#94A3B8;margin-top:1px;'>สมัครผ่าน LINE • "+new Date(u.createdAt||Date.now()).toLocaleDateString('th-TH')+"</div></div>"
+        +"<select data-role-ap='"+u.id+"' style='padding:5px 8px;border-radius:6px;border:1.5px solid #CBD5E1;font-size:12px;font-family:Sarabun,sans-serif;'>"
+        +"<option value='staff'>👷 พนักงาน</option><option value='contractor'>🏢 ผู้รับเหมา</option><option value='subcontractor'>🔨 ผู้รับจ้าง</option><option value='supervisor'>⭐ สเมียร์</option></select>"
+        +"<button type='button' class='bs' style='padding:5px 12px;font-size:12px;' data-ap='"+u.id+"'>✅ อนุมัติ</button>"
+        +"<button type='button' class='bd' style='padding:5px 12px;font-size:12px;' data-du='"+u.id+"'>🗑️</button>"
+        +"</div>";
+    }).join('');
+  }
+  html+=active.map(function(u){
     var rc=ROLE[u.role]||ROLE.staff,isSelf=u.id===me.id;
     return "<div class='card' style='padding:11px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:8px;opacity:"+(u.active?1:.55)+";'>"
       +"<div style='width:38px;height:38px;background:"+rc.color+"15;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;'>"+rc.icon+"</div>"
-      +"<div style='flex:1;min-width:130px;'><div style='font-weight:700;font-size:13px;color:#1E293B;'>"+u.name+"</div><div style='font-size:11px;color:#94A3B8;margin-top:1px;'>@"+u.username+"</div></div>"
+      +"<div style='flex:1;min-width:130px;'><div style='font-weight:700;font-size:13px;color:#1E293B;'>"+u.name+"</div><div style='font-size:11px;color:#94A3B8;margin-top:1px;'>@"+u.username+"</div>"
+      +(u.lineUserId?"<div style='font-size:10px;color:#06C755;font-weight:700;margin-top:2px;'>🟢 LINE linked</div>":"<div style='font-size:10px;color:#94A3B8;margin-top:2px;'>⚪ ยังไม่ได้ link LINE</div>")
+      +"</div>"
       +"<span class='tag' style='background:"+rc.color+"18;color:"+rc.color+";'>"+rc.icon+" "+rc.label+"</span>"
       +(u.active?"":" <span style='font-size:11px;color:#DC2626;font-weight:700;'>🚫 ปิด</span>")
       +"<div style='display:flex;gap:5px;'>"
@@ -2723,9 +3026,25 @@ function renderUsers(){
       +(isSelf?"":"<button type='button' class='bd' style='padding:4px 9px;font-size:12px;' data-du='"+u.id+"'>🗑️</button>")
       +"</div></div>";
   }).join('');
+  el.innerHTML=html;
   el.querySelectorAll("[data-eu]").forEach(function(b){b.onclick=function(){openUserModal(b.dataset.eu);};});
   el.querySelectorAll("[data-tu]").forEach(function(b){b.onclick=function(){var u=USERS.filter(function(x){return x.id===b.dataset.tu;})[0];if(u&&u.id!==me.id){u.active=!u.active;apiUpdate("USERS",u.id,u);}renderUsers();};});
   el.querySelectorAll("[data-du]").forEach(function(b){b.onclick=function(){openDel("user",b.dataset.du);};});
+  el.querySelectorAll("[data-ap]").forEach(function(b){b.onclick=function(){
+    var u=USERS.filter(function(x){return x.id===b.dataset.ap;})[0];
+    if(!u)return;
+    var roleSel=el.querySelector("[data-role-ap='"+u.id+"']");
+    var role=roleSel?roleSel.value:'staff';
+    u.active=true;u.pending=false;u.role=role;
+    apiUpdate('USERS',u.id,u); // saves to Firebase + Google Sheets
+    // notify the new user via LINE
+    if(u.lineUserId){
+      fetch(LINE_BOT_URL+'/push',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({lineUserId:u.lineUserId,message:'✅ บัญชีของคุณได้รับการอนุมัติแล้ว! กดเมนูหลักเพื่อเข้าใช้งานระบบจักรวาลได้เลย'})
+      }).catch(function(){});
+    }
+    renderUsers();
+  };});
 }
 
 // ─── CATEGORIES ───────────────────────────────────────────────────────
@@ -2959,6 +3278,7 @@ function startFirebaseListeners(){
   if(_fbStarted||!USE_FIREBASE)return;
   _fbStarted=true;
   console.log('[FB] Starting real-time listeners...');
+  fbListen('USERS',USERS,function(){cleanExpiredPending();renderUsers();});
   fbListen('VEHICLES',VEHICLES,function(){VEHICLES.forEach(function(v){if(!v.status||v.status==='ok')v.status='available';if(!v.noteImgs)v.noteImgs=[];});renderDispatch();renderVehicles();buildTabs();});
   fbListen('VEHICLE_HISTORY',VEHICLE_HISTORY,function(){renderDispatch();});
   fbListen('REQS',REQS,function(){renderReqList();buildTabs();});
@@ -2997,11 +3317,20 @@ function openBookingModal(vehicleId){
   if(vsel){
     vsel.innerHTML="<option value=''>-- เลือกรถ --</option>"
       +VEHICLES.filter(function(v){return v.status!=="repair"&&v.status!=="broken";}).map(function(v){
+        var isOut=v.status==='out';
+        if(isOut) return "<option value='"+v.id+"' disabled style='color:#94A3B8;'>❌ "+(v.name||"")+(v.plate?" ["+v.plate+"]":"")+" — ออกงานอยู่</option>";
         return "<option value='"+v.id+"'"+(v.id===vehicleId?" selected":"")+">"+(v.name||"")+(v.plate?" ["+v.plate+"]":"")+"</option>";
       }).join("");
   }
   var dsel=g("bk-driver-sel");
-  if(dsel){dsel.innerHTML="<option value=''>-- เลือกคนขับ --</option>"+DRIVERS.map(function(d){return "<option value='"+d.name+"'>"+d.name+"</option>";}).join("");}
+  if(dsel){
+    var busyDrv=VEHICLES.filter(function(v){return v.status==='out'&&v.currentDriver;}).map(function(v){return v.currentDriver;});
+    dsel.innerHTML="<option value=''>-- เลือกคนขับ --</option>"+DRIVERS.map(function(d){
+      var isBusy=busyDrv.indexOf(d.name)>=0;
+      if(isBusy) return "<option value='"+d.name+"' disabled style='color:#94A3B8;'>❌ "+d.name+" — ออกงานอยู่</option>";
+      return "<option value='"+d.name+"'>"+d.name+"</option>";
+    }).join("");
+  }
   var dother=g("bk-driver-other");if(dother)dother.value="";
   var psel=g("bk-proj-sel");
   if(psel){psel.innerHTML="<option value=''>-- เลือกโครงการ --</option>"+PROJECTS.map(function(p){return "<option>"+p.name+"</option>";}).join("")+"<option value='other'>อื่นๆ</option>";}
@@ -3112,9 +3441,15 @@ if(g("bpanel-add"))g("bpanel-add").onclick=function(){var p=g("booking-panel");i
 
 function getBookingExpiryTime(b){
   if(!b.date||!b.scheduledTime)return null;
-  var p=b.scheduledTime.split(':'),h=parseInt(p[0]),m=parseInt(p[1]);
-  var expMins=h*60+m-30; if(expMins<0)expMins=0;
-  return new Date(b.date+'T'+String(Math.floor(expMins/60)).padStart(2,'0')+':'+String(expMins%60).padStart(2,'0')+':00');
+  // expire ที่เวลาออกรถ (supervisor ต้องยืนยันก่อนถึงเวลา)
+  var tripTime=new Date(b.date+'T'+b.scheduledTime+':00');
+  // แต่ถ้าสร้างก่อนออกรถน้อยกว่า 2 ชั่วโมง ให้อย่างน้อย 30 นาทีนับจากสร้าง
+  if(b.createdAt){
+    var created=new Date(b.createdAt);
+    var minExpiry=new Date(created.getTime()+30*60*1000);
+    if(minExpiry>tripTime)return minExpiry;
+  }
+  return tripTime;
 }
 function bookingCountdownHtml(b){
   var exp=getBookingExpiryTime(b); if(!exp)return'';
@@ -3124,6 +3459,7 @@ function bookingCountdownHtml(b){
   var txt=rem>=60?Math.floor(rem/60)+'ชม. '+(rem%60)+'น.':rem+' นาที';
   return"<span style='color:"+col+";font-size:11px;font-weight:700;'>⏳ หมดอายุใน "+txt+"</span>";
 }
+var _expiredNotified={};
 function checkAndExpireBookings(){
   var now=Date.now();
   TRIP_BOOKINGS.forEach(function(b){
@@ -3133,6 +3469,19 @@ function checkAndExpireBookings(){
       b.status='expired';
       apiUpdate("TRIP_BOOKINGS",b.id,{id:b.id,status:'expired',updatedAt:new Date().toISOString()});
       fbUpdate("TRIP_BOOKINGS",b.id,{status:'expired',updatedAt:new Date().toISOString()});
+      // แจ้งเตือนเฉพาะครั้งแรกที่ expire
+      if(!_expiredNotified[b.id]){
+        _expiredNotified[b.id]=true;
+        var msg="❌ การจอง "+b.vehicleName+" ของ "+b.driver+" ("+b.scheduledTime+") ถูกยกเลิกอัตโนมัติ — ไม่ได้รับการยืนยันทันเวลา";
+        addTicker(msg);
+        // notify ผู้จอง
+        var creator=USERS.filter(function(u){return u.name===b.createdBy;})[0];
+        if(creator) sendNotif(creator.id,msg,"dispatch");
+        // notify manager/supervisor ทุกคน
+        USERS.filter(function(u){return u.role==="admin"||u.role==="supervisor";}).forEach(function(u){
+          if(!creator||u.id!==creator.id) sendNotif(u.id,msg,"dispatch");
+        });
+      }
     }
   });
 }
@@ -3149,7 +3498,7 @@ function renderDispatch(){
   var qbBtn = g("btn-quick-book");
   if(qbBtn){
     qbBtn.style.display = "inline-flex";
-    qbBtn.onclick = function(){toggleBookingPanel();};
+    qbBtn.onclick = function(){openBookingModal("");};
     // badge จำนวนการจองวันนี้
     var todayBookCnt = TRIP_BOOKINGS.filter(function(b){return b.date===today&&(b.status==="pending"||b.status==="requested");}).length;
     qbBtn.textContent = "📅 จองรถ"+(todayBookCnt>0?" ("+todayBookCnt+")":"");
@@ -3387,23 +3736,39 @@ function renderDispatch(){
 // ── ส่งรถออก ──────────────────────────────────────────────────────
 function openDispatchOut(vehicleId){
   hide("dispatch-err");
-  // Build selects
-  var vsel=g("do-veh-sel");
-  if(vsel){
-    vsel.innerHTML="<option value=''>-- เลือกรถ --</option>"+VEHICLES.map(function(v){
-      var st=VST[v.status]||VST.ok;
-      var isRepair=v.status==="repair"||v.status==="broken";
-      var isOut=VEHICLE_LOGS.filter(function(l){return l.vehicleId===v.id&&l.date===todayStr()&&!l.timeIn;}).length>0;
-      if(isRepair||isOut) return "<option value='"+v.id+"' disabled style='color:#94A3B8;'>"
-        +st.icon+" "+v.name+(v.plate?" ["+v.plate+"]":"")+(isRepair?" — กำลังซ่อม":isOut?" — ออกงานอยู่":"")+"</option>";
-      return "<option value='"+v.id+"'"+(v.id===vehicleId?" selected":"")+">"
-        +st.icon+" "+v.name+(v.plate?" ["+v.plate+"]":"")+"</option>";
-    }).join("");
+  var veh=vehicleId?VEHICLES.filter(function(x){return x.id===vehicleId;})[0]:null;
+  // ถ้ามี vehicleId → lock รถ, ถ้าไม่มี → แสดง dropdown
+  var dWrap=g("do-veh-dropdown-wrap"), lWrap=g("do-veh-locked-wrap"), lBox=g("do-veh-locked");
+  if(vehicleId&&veh){
+    if(dWrap)dWrap.classList.add("hidden");
+    if(lWrap)lWrap.classList.remove("hidden");
+    if(lBox)lBox.textContent="🚛 "+veh.name+(veh.plate?" ["+veh.plate+"]":"");
+    var vsel=g("do-veh-sel"); if(vsel){vsel.innerHTML="<option value='"+vehicleId+"' selected>"+veh.name+"</option>";}
+  } else {
+    if(dWrap)dWrap.classList.remove("hidden");
+    if(lWrap)lWrap.classList.add("hidden");
+    var vsel=g("do-veh-sel");
+    if(vsel){
+      vsel.innerHTML="<option value=''>-- เลือกรถ --</option>"+VEHICLES.map(function(v){
+        var isRepair=v.status==="repair"||v.status==="broken";
+        var isOut=v.status==='out'||VEHICLE_LOGS.filter(function(l){return l.vehicleId===v.id&&l.date===todayStr()&&!l.timeIn;}).length>0;
+        var isBooked=!isOut&&TRIP_BOOKINGS.filter(function(b){return b.vehicleId===v.id&&b.date===todayStr()&&b.status==='pending';}).length>0;
+        if(isRepair) return "<option value='"+v.id+"' disabled style='color:#94A3B8;'>❌ "+v.name+(v.plate?" ["+v.plate+"]":"")+" — กำลังซ่อม</option>";
+        if(isOut) return "<option value='"+v.id+"' disabled style='color:#94A3B8;'>❌ "+v.name+(v.plate?" ["+v.plate+"]":"")+" — ออกงานอยู่</option>";
+        if(isBooked) return "<option value='"+v.id+"' disabled style='color:#94A3B8;'>⚠️ "+v.name+(v.plate?" ["+v.plate+"]":"")+" — มีการจองอยู่</option>";
+        return "<option value='"+v.id+"'>"+v.name+(v.plate?" ["+v.plate+"]":"")+"</option>";
+      }).join("");
+    }
   }
   var dsel=g("do-driver-sel");
   if(dsel){
+    var busyDrivers=VEHICLES.filter(function(v){return v.status==='out'&&v.currentDriver;}).map(function(v){return v.currentDriver;});
     dsel.innerHTML="<option value=''>-- เลือกคนขับ --</option>"
-      +DRIVERS.map(function(d){return "<option value='"+d.name+"'>"+d.name+"</option>";}).join("");
+      +DRIVERS.map(function(d){
+        var isBusy=busyDrivers.indexOf(d.name)>=0;
+        if(isBusy)return "<option value='"+d.name+"' disabled style='color:#94A3B8;'>❌ "+d.name+" — ออกงานอยู่</option>";
+        return "<option value='"+d.name+"'>"+d.name+"</option>";
+      }).join("");
   }
   var other=g("do-driver-other"); if(other)other.value="";
   var psel=g("do-proj-sel");
@@ -3540,22 +3905,21 @@ if(g("dr-confirm"))g("dr-confirm").onclick=function(){
 if (USE_API) {
   // โหลดข้อมูลจาก Sheets ก่อน แล้วค่อยแสดง login
   loadFromSheets(function(){
-    // พยายาม restore session หลัง load เสร็จ
     var restored = false;
     try { restored = restoreSession(); } catch(e){ console.error('restoreSession err:', e); }
-    if(!restored){
-      show("pg-login");
-      checkRemembered();
-    }
+    if(restored) return;
+    tryLiffLogin(function(liffOk){
+      if(!liffOk){ show("pg-login"); checkRemembered(); }
+    });
   });
 } else {
   // Demo mode: ใช้ข้อมูล sample ใน memory
   setTimeout(function(){
     hide("pg-loading");
-    if(!restoreSession()){
-      show("pg-login");
-      checkRemembered();
-    }
+    if(restoreSession()) return;
+    tryLiffLogin(function(liffOk){
+      if(!liffOk){ show("pg-login"); checkRemembered(); }
+    });
   }, 500);
 }
 
